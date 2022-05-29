@@ -1,16 +1,11 @@
 ﻿using Grom.Util;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Grom.QueryDSL;
+namespace Grom.GromQuery;
 
 internal class ExpressionToGromDSLMapper<T>
 {
-    private readonly ExpressionType[] valueExpressionTypes = { ExpressionType.MemberAccess, ExpressionType.Constant };
+    private readonly ExpressionType[] valueExpressionTypes = { ExpressionType.MemberAccess, ExpressionType.Constant, ExpressionType.Call };
 
     private string parameterName;
     private Expression<Func<T, bool>> expr;
@@ -18,31 +13,21 @@ internal class ExpressionToGromDSLMapper<T>
     internal ExpressionToGromDSLMapper(Expression<Func<T, bool>> expr)
     {
         this.expr = expr;
-        parameterName = expr.Parameters.First().Name;//TODO: make more robust (check stuff)
+        if (expr.Parameters.Count() != 1 || expr.Parameters.First().Name is null)
+        {
+            throw new ArgumentException("Where clause expects exactly one parameter which represents the node for which you want to filter properties!");
+        }
+        parameterName = expr.Parameters.First().Name;
     }
 
     internal IConstraintNode Map()
     {
-        return Map(expr.Body);//TODO: check before cast
+        return Map(expr.Body);
     }
 
-    //internal IConstraintNode Map(BinaryExpression expr)
-    //{
-    //    switch(expr.NodeType)
-    //    {
-    //        case ExpressionType.AndAlso:
-    //            return MapExpressionToInfixOperator(expr, InfixOperator.And);
-    //        case ExpressionType.Or:
-    //            return MapExpressionToInfixOperator(expr, InfixOperator.Or);
-    //        default:
-    //            throw new InvalidOperationException("Expression not supported!"); //TODO: make better add reference to actual unsupported thing.
-    //    }
-    //    return null;
-    //}
-
-    internal IConstraintNode Map(Expression expr)
+    internal IConstraintNode Map(Expression expr) //TODO: split into multiple
     {
-        switch(expr.NodeType)
+        switch (expr.NodeType)
         {
             case ExpressionType.AndAlso:
                 return MapExpressionToInfixOperator((BinaryExpression)expr, InfixOperator.And);
@@ -69,29 +54,6 @@ internal class ExpressionToGromDSLMapper<T>
         return null;
     }
 
-    internal IConstraintNode Map(MemberExpression expr)
-    {
-        switch (expr.NodeType)
-        {
-            
-            default:
-                throw new InvalidOperationException("Expression not supported!"); //TODO: make better add reference to actual unsupported thing.
-
-        }
-        return null;
-    }
-
-    //internal IConstraintNode Map(FieldExpression expr)
-    //{
-    //    switch (expr.NodeType)
-    //    {
-
-    //        default:
-    //            throw new InvalidOperationException("Expression not supported!"); //TODO: make better add reference to actual unsupported thing.
-
-    //    }
-    //    return null;
-    //}
 
     private IConstraintNode MapExpressionToInfixOperator(BinaryExpression expr, InfixOperator infixOperator)
     {
@@ -114,7 +76,7 @@ internal class ExpressionToGromDSLMapper<T>
 
     private IConstraintNode MapExpressionToComparison(BinaryExpression expr, Comparison comparison)
     {
-        if( !valueExpressionTypes.Contains(expr.Left.NodeType) || !valueExpressionTypes.Contains(expr.Right.NodeType))
+        if (!valueExpressionTypes.Contains(expr.Left.NodeType) || !valueExpressionTypes.Contains(expr.Right.NodeType))
         {
             throw new InvalidOperationException("Something went wrong!");//TODO: make better message 
         }
@@ -126,22 +88,17 @@ internal class ExpressionToGromDSLMapper<T>
             Right = MapMemberExpressionToValueNode(expr.Right),
         };
 
-        if(propertyNode.Left.GetType() != typeof(NodeProperty) && propertyNode.Right.GetType() != typeof(NodeProperty))
+        if (propertyNode.Left.GetType() != typeof(NodeProperty) && propertyNode.Right.GetType() != typeof(NodeProperty))
         {
             throw new InvalidOperationException($"Either Left hand side or right hand side of a constraint must reference the node!"); //TODO: make better message 
         }
 
-        return new PropertyConstraint
-        {
-            Left = MapMemberExpressionToValueNode(expr.Left),
-            Comparison = comparison,
-            Right = MapMemberExpressionToValueNode(expr.Right),
-        };
+        return propertyNode;
     }
 
     private IValue MapMemberExpressionToValueNode(Expression expr)
     {
-        if(isPropertyExpression(expr, out string name))
+        if (isPropertyExpression(expr, out string name))
         {
             return new NodeProperty
             {
@@ -156,7 +113,7 @@ internal class ExpressionToGromDSLMapper<T>
 
     private bool isPropertyExpression(Expression expr, out string name)
     {
-        if(expr.NodeType == ExpressionType.MemberAccess)
+        if (expr.NodeType == ExpressionType.MemberAccess)
         {
             var member = (MemberExpression)expr;
             if (member.Expression.NodeType == ExpressionType.Parameter)
@@ -171,10 +128,12 @@ internal class ExpressionToGromDSLMapper<T>
 
     private string getValueFromExpression(Expression expr) // Expression can be used since its the base class for MemberExpression
     {
-        switch(expr.NodeType)
+        switch (expr.NodeType)
         {
             case ExpressionType.MemberAccess:
                 return getValueFromMemberExpression((MemberExpression)expr);
+            case ExpressionType.Call:
+                return getValueFromMethodCall((MethodCallExpression)expr);
             case ExpressionType.Constant:
                 return getValueFromConstantExpression((ConstantExpression)expr);
             default:
@@ -191,5 +150,11 @@ internal class ExpressionToGromDSLMapper<T>
     private string getValueFromConstantExpression(ConstantExpression expr)
     {
         return Utils.TypeStringify(expr.Value);
+    }
+
+    private string getValueFromMethodCall(MethodCallExpression expr)
+    {
+        var o = Expression.Lambda(expr).Compile().DynamicInvoke();
+        return Utils.TypeStringify(o);
     }
 }

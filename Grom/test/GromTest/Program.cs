@@ -2,7 +2,7 @@
 
 using Grom;
 using Grom.GraphDbConnectors.Neo4J;
-using Grom.QueryDSL;
+using Grom.GromQuery;
 using GromTest.GraphTest.Nodes;
 
 // Create connection to db using Neo4J connector
@@ -59,6 +59,10 @@ GromGraph.CreateConnection(new GromNeo4jConnector("bolt://localhost:7687", "neo4
 var vari = 25;
 var c2 = await Retrieve<Person>
     //.Where(p => p.Name == "John")
+    //.Where(p => p.Age >= testClass.getA(24))
+    //.Where(p => p.Age >= testClass.getA())
+    //.Where(p => p.Age >= personNode.Age)
+    //.Where(p => p.Age >= vari)
     //.Where(p => !(p.Name == "John"))
     .Where(p => p.Age >= vari && p.Name == "John")
     .GetSingle();
@@ -87,3 +91,18 @@ var c2 = await Retrieve<Person>
 
 
 var d = 1;
+
+//class Test
+//{
+//    private int a = 10;
+
+//    public int getA()
+//    {
+//        return a;
+//    }
+
+//    public int getA(int b)
+//    {
+//        return b;
+//    }
+//}

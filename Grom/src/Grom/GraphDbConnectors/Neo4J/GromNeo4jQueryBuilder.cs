@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using Grom.QueryDSL;
+using Grom.GromQuery;
 
 namespace Grom.GraphDbConnectors.Neo4J;
 

@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using Grom.Entities;
 using Grom.Entities.Relationships;
-using Grom.QueryDSL;
+using Grom.GromQuery;
 using Grom.Util;
 using Neo4j.Driver;
 
@@ -9,8 +9,6 @@ namespace Grom.GraphDbConnectors.Neo4J;
 
 public class GromNeo4jConnector : GromGraphDbConnector
 {
-    private static readonly List<Type> SupportedTypes = new() { typeof(int), typeof(bool), typeof(string), typeof(float) }; // TODO: support all property types of Neo4J
-    
     private static readonly string CreateNodeQueryBase = "CREATE (n:{0} {{{1}}}) RETURN id(n) as r;";
     private static readonly string UpdateNodeQueryBase = "MATCH (n:{0}) WHERE id(n) = {1} SET n = {{{2}}};";
     private static readonly string DeleteNodeQueryBase = "MATCH (a) WHERE id(a) = {0} OPTIONAL MATCH (a)-[r1]->(b1), (a)<-[r2]-(b2), (a)-[r3]-(b3) DELETE r1, r2, r3, a;";
@@ -84,11 +82,6 @@ public class GromNeo4jConnector : GromGraphDbConnector
 
         await using var session = _driver.AsyncSession();
         await session.RunAsync(query);
-    }
-
-    internal override List<Type> GetSupportedTypes()
-    {
-        return SupportedTypes;
     }
 
     internal override async Task<T> GetSingleNode<T>(IConstraintNode state)

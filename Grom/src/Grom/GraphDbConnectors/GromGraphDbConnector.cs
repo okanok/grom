@@ -1,12 +1,14 @@
 ﻿using System.Reflection;
 using Grom.Entities;
 using Grom.Entities.Relationships;
-using Grom.QueryDSL;
+using Grom.GromQuery;
 
 namespace Grom.GraphDbConnectors;
 
 public abstract class GromGraphDbConnector
 {
+    private static readonly List<Type> SupportedTypes = new() { typeof(int), typeof(bool), typeof(string), typeof(float), typeof(long), typeof(char) };
+
     internal abstract Task<long> CreateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel);
 
     /// <summary>
@@ -26,7 +28,14 @@ public abstract class GromGraphDbConnector
 
     internal abstract Task DeleteRelationship(long relationshipId);
 
-    internal abstract List<Type> GetSupportedTypes();
+    /// <summary>
+    /// Returns a list of the types supported by Grom
+    /// </summary>
+    /// <returns>list of supported types</returns>
+    internal List<Type> GetSupportedTypes()
+    {
+        return SupportedTypes;
+    }
 
     /// <summary>
     /// Retrieves a single node from the graph database

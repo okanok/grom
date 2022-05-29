@@ -1,23 +1,16 @@
 ﻿using System.Linq.Expressions;
 using Grom.Entities;
-using Grom.Util;
 
-namespace Grom.QueryDSL;
+namespace Grom.GromQuery;
 
-public class QueryBase<T> : DbRetriever<T> where T : EntityNode 
+public class Query<T> : DbRetriever<T> where T : EntityNode
 {
     private readonly IConstraintNode state;
 
-    internal QueryBase(IConstraintNode state): base(state)
+    internal Query(IConstraintNode state) : base(state)
     {
         this.state = state;
     }
-
-    // TODO: Implement Quick query for simply filtering one property
-    //public static ConstraintBase<T> Where()
-    //{
-    //    return new ConstraintBase<T>(new QueryState());
-    //}
 
     public static DbRetriever<T> Where(IConstraintNode constr)
     {
@@ -26,10 +19,9 @@ public class QueryBase<T> : DbRetriever<T> where T : EntityNode
 
     public static DbRetriever<T> Where(Expression<Func<T, bool>> expr)
     {
-        var a = new ExpressionToGromDSLMapper<T>(expr);
-        var b = a.Map();
-        // convert BinaryExpression to IConstraintNode
-        return new DbRetriever<T>(b);
+        var expressoinMapper = new ExpressionToGromDSLMapper<T>(expr);
+        var a = expressoinMapper.Map();
+        return new DbRetriever<T>(a);
     }
 }
 
@@ -59,7 +51,7 @@ public class DbRetriever<T> where T : EntityNode
 }
 
 // Just an alias so QueryBase is still descriptive of its job and Retrieve is a nice name the user can use
-public class Retrieve<T> : QueryBase<T> where T : EntityNode
+public class Retrieve<T> : Query<T> where T : EntityNode
 {
     private Retrieve(IConstraintNode state) : base(state)
     {
