@@ -21,12 +21,6 @@ public class EntityNode
      */
     internal long? EntityNodeId;
 
-    /*
-     * List of children of this node
-     * TODO: support polymorphic relationships
-     */
-    //internal readonly List<EntityDirectedRelationship> children = new ();
-
     public EntityNode()
     {
         _dbConnector = GromGraph.GetDbConnector();
@@ -88,57 +82,4 @@ public class EntityNode
             .Select(x => x.GetValue(this).As<RelationshipCollection>());
 
     }
-
-    // TODO: support polymorphic relationships
-    //public EntityNode AddRelationship(EntityDirectedRelationship relationship)
-    //{
-    //    // check if relationship does not exist yet
-    //    // add relationship
-    //    if (children.Any(x => x == relationship))
-    //    {
-    //        // TODO: give some feedback to caller that relationship already exists
-    //    }
-    //    else
-    //    {
-    //        children.Add(relationship);
-    //    }
-    //    return this;
-    //}
-
-    //// TODO: name better to mean relationships to children
-    //public EntityDirectedRelationship GetRelationship(Filter filter)
-    //{
-    //    var relationship = children
-    //        .FirstOrDefault(x => filter.ApplyFilter(x));
-    //    if (relationship == null)
-    //    {
-    //        return null;
-    //    }
-    //    return relationship;
-    //}
-
-    //// TODO: name better to mean relationships to children
-    //public List<EntityDirectedRelationship> GetRelationships()
-    //{
-    //    return children;
-    //}
-
-    //// TODO: name better to mean relationships to children
-    //public List<EntityDirectedRelationship> GetRelationships(Filter filter)
-    //{
-    //    return children
-    //        .FindAll(x => filter.ApplyFilter(x))
-    //        .ToList();
-    //}
-
-    //public void RemoveChild(EntityNode childToRemove)
-    //{
-    //    var a = children.RemoveAll(x => x.Child == childToRemove);
-    //}
-
-    //public void RemoveRelationship(EntityDirectedRelationship relationshipToRemove)
-    //{
-    //    var a = children.FindAll(x => x == relationshipToRemove);
-    //}
-
 }

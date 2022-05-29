@@ -1,28 +1,33 @@
-﻿using System.Reflection;
+﻿using System.Globalization;
+using System.Reflection;
 using Grom.Entities.Attributes;
 
 namespace Grom.Util;
 
-// TODO: make internal again
-public class Utils
+internal class Utils
 {
     internal static string TypeStringify(object o)
     {
         return o switch
         {
-            string => string.Format("'{0}'", o),
-            bool => (bool)o ? "1" : "0",
-            _ => o?.ToString() ?? String.Empty,
+            string  => string.Format("'{0}'", o),
+            bool    => (bool)o ? "1" : "0",
+            float   => ((float)o).ToString(CultureInfo.InvariantCulture),
+            _       => o?.ToString() ?? String.Empty,
         };
     }
 
     internal static object Typify(Type expectedType, object o)
     {
-        // TODO: support other types aswell
-        // TODO: handle unsuported types
         if (expectedType == typeof(int))
         {
             return Convert.ToInt32(o);
+        } else if (expectedType == typeof(bool))
+        {
+            return Convert.ToBoolean(o);
+        } else if (expectedType == typeof(float))
+        {
+            return Convert.ToSingle(o);
         }
         return o;
     }

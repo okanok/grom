@@ -3,6 +3,7 @@
 using Grom;
 using Grom.GraphDbConnectors.Neo4J;
 using Grom.GromQuery;
+using Grom.Util;
 using GromTest.GraphTest.Nodes;
 
 // Create connection to db using Neo4J connector
@@ -56,15 +57,35 @@ GromGraph.CreateConnection(new GromNeo4jConnector("bolt://localhost:7687", "neo4
 //    )
 //    .GetSingle();
 
-var vari = 25;
-var c2 = await Retrieve<Person>
-    //.Where(p => p.Name == "John")
-    //.Where(p => p.Age >= testClass.getA(24))
-    //.Where(p => p.Age >= testClass.getA())
-    //.Where(p => p.Age >= personNode.Age)
-    //.Where(p => p.Age >= vari)
-    //.Where(p => !(p.Name == "John"))
-    .Where(p => p.Age >= vari && p.Name == "John")
+//var vari = 25;
+var personNode = await Retrieve <Person>
+    .Where(p => p.Name == "John")
+//    //.Where(p => p.Age >= testClass.getA(24))
+//    //.Where(p => p.Age >= testClass.getA())
+//    //.Where(p => p.Age >= personNode.Age)
+//    //.Where(p => p.Age >= vari)
+//    //.Where(p => !(p.Name == "John"))
+//    .Where(p => p.Age >= vari && p.Name == "John")
+    .GetSingle();
+
+//Supported types
+//var typeTestNode = new PropertiesTestNode()
+//{
+//    StringProp = "test",
+//    IntProp = 1,
+//    BoolProp = false,
+//    FloatProp = 1.001f,
+//    LongProp = 1000000000000,
+//};
+
+//await typeTestNode.Persist();
+
+var typeTestNodeRetrieved = await Retrieve<PropertiesTestNode>
+    //.Where(n => n.IntProp == 1)
+    //.Where(n => n.StringProp == "test")
+    //.Where(n => n.BoolProp == false)
+    //.Where(n => n.FloatProp == 1.001f)
+    .Where(n => n.LongProp == 10)
     .GetSingle();
 
 // TODO: add support for class property access in where expression

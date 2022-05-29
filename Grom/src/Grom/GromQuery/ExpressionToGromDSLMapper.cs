@@ -5,7 +5,7 @@ namespace Grom.GromQuery;
 
 internal class ExpressionToGromDSLMapper<T>
 {
-    private readonly ExpressionType[] valueExpressionTypes = { ExpressionType.MemberAccess, ExpressionType.Constant, ExpressionType.Call };
+    private readonly ExpressionType[] valueExpressionTypes = { ExpressionType.MemberAccess, ExpressionType.Constant, ExpressionType.Call }; 
 
     private string parameterName;
     private Expression<Func<T, bool>> expr;
@@ -78,7 +78,7 @@ internal class ExpressionToGromDSLMapper<T>
     {
         if (!valueExpressionTypes.Contains(expr.Left.NodeType) || !valueExpressionTypes.Contains(expr.Right.NodeType))
         {
-            throw new InvalidOperationException("Something went wrong!");//TODO: make better message 
+            throw new InvalidOperationException("Expressions other than a member access, method call or value reference not supported in a value comparison!");
         }
 
         var propertyNode = new PropertyConstraint
@@ -90,7 +90,7 @@ internal class ExpressionToGromDSLMapper<T>
 
         if (propertyNode.Left.GetType() != typeof(NodeProperty) && propertyNode.Right.GetType() != typeof(NodeProperty))
         {
-            throw new InvalidOperationException($"Either Left hand side or right hand side of a constraint must reference the node!"); //TODO: make better message 
+            throw new InvalidOperationException($"Either Left hand side or right hand side of a constraint must reference the node!");
         }
 
         return propertyNode;
@@ -156,5 +156,5 @@ internal class ExpressionToGromDSLMapper<T>
     {
         var o = Expression.Lambda(expr).Compile().DynamicInvoke();
         return Utils.TypeStringify(o);
-    }
+    }   
 }

@@ -7,7 +7,7 @@ namespace Grom.GraphDbConnectors;
 
 public abstract class GromGraphDbConnector
 {
-    private static readonly List<Type> SupportedTypes = new() { typeof(int), typeof(bool), typeof(string), typeof(float), typeof(long), typeof(char) };
+    private static readonly List<Type> SupportedTypes = new() { typeof(int), typeof(bool), typeof(string), typeof(float), typeof(long)};
 
     internal abstract Task<long> CreateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel);
 

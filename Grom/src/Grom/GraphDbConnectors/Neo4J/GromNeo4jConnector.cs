@@ -97,7 +97,7 @@ public class GromNeo4jConnector : GromGraphDbConnector
             var result = (await cursor.SingleAsync());
             return _gromNeo4JResultMapper.Map<T>(result);
 
-        } catch (InvalidOperationException ex)
+        } catch (InvalidOperationException ex) //TODO: do this better
         {
             if (ex.Message.Equals("The result is empty."))
             {
