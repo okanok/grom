@@ -10,6 +10,10 @@ internal class GromNeo4jResultMapper
     {
         var node = (INode)record[nodeKey];
         var nodeInstance = (T)Activator.CreateInstance(typeof(T));
+        if(nodeInstance is null)
+        {
+            throw new ArgumentException($"Cant create an instance of {nameof(T)}!");
+        }
         var properties = Utils.GetEntityProperties(nodeInstance.GetType()).ToList();
         foreach (var property in properties)
         {

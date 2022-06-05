@@ -15,7 +15,7 @@ public class Query<T> : DbRetriever<T> where T : EntityNode
     /// <summary>
     /// Filter nodes based on given Grom DSL syntax tree
     /// This method is created for optimization purposes as it wont require parsing a lambda expression which is reflection heavy
-    /// but is less safe and less expressive than lambda filter
+    /// but is less safe and less expressive than a lambda filter
     /// </summary>
     /// <param name="constr">the constraints in the Grom DSL format</param>
     /// <returns></returns>

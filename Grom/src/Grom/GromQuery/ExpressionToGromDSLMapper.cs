@@ -48,7 +48,7 @@ internal class ExpressionToGromDSLMapper<T>
             case ExpressionType.LessThanOrEqual:
                 return MapExpressionToComparison((BinaryExpression)expr, Comparison.Leq);
             default:
-                throw new InvalidOperationException("Expression not supported!"); //TODO: make better add reference to actual unsupported thing.
+                throw new InvalidOperationException("Expression not supported! Only Logical operators And, Or, Not and comparisons ==, !=, >, <, <= and >= are supported.");
 
         }
         return null;
@@ -137,7 +137,7 @@ internal class ExpressionToGromDSLMapper<T>
             case ExpressionType.Constant:
                 return getValueFromConstantExpression((ConstantExpression)expr);
             default:
-                throw new InvalidOperationException("Something went wrong!");//TODO: make better message
+                throw new InvalidOperationException("Something went wrong! Only a constant, variable, no argument function call or property access are allowed in a value comparison.");
         }
     }
 
