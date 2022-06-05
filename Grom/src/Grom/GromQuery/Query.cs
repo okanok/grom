@@ -12,11 +12,24 @@ public class Query<T> : DbRetriever<T> where T : EntityNode
         this.state = state;
     }
 
+    /// <summary>
+    /// Filter nodes based on given Grom DSL syntax tree
+    /// This method is created for optimization purposes as it wont require parsing a lambda expression which is reflection heavy
+    /// but is less safe and less expressive than lambda filter
+    /// </summary>
+    /// <param name="constr">the constraints in the Grom DSL format</param>
+    /// <returns></returns>
     public static DbRetriever<T> Where(IConstraintNode constr)
     {
         return new DbRetriever<T>(constr);
     }
 
+    /// <summary>
+    /// Filter nodes based on given lambda expression
+    /// Grom will parse this into a query
+    /// </summary>
+    /// <param name="expr">a lambda expression with a single EntityNode parameter which returns a boolean</param>
+    /// <returns></returns>
     public static DbRetriever<T> Where(Expression<Func<T, bool>> expr)
     {
         var expressoinMapper = new ExpressionToGromDSLMapper<T>(expr);
@@ -34,6 +47,10 @@ public class DbRetriever<T> where T : EntityNode
         this.state = state;
     }
 
+    /// <summary>
+    /// Retrieves a single node 
+    /// </summary>
+    /// <returns></returns>
     public async Task<T?> GetSingle()
     {
         return await GromGraph
@@ -41,12 +58,11 @@ public class DbRetriever<T> where T : EntityNode
             .GetSingleNode<T>(state);
     }
 
-    public async Task<IEnumerable<T?>> GetAll()
+    public async Task<IEnumerable<T>> GetAll()
     {
-        return null;
-        //return await GromGraph
-        //    .GetDbConnector()
-        //    .GetNodes<T>(state);
+        return await GromGraph
+            .GetDbConnector()
+            .GetNodes<T>(state);
     }
 }
 

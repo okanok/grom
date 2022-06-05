@@ -9,24 +9,24 @@ using Neo4j.Driver;
 
 namespace Grom.Entities;
 
-public class EntityNode
+public abstract class EntityNode
 {
     private readonly GromGraphDbConnector _dbConnector;
-    private readonly Type t; 
-    private readonly IEnumerable<PropertyInfo> properties;
+    private readonly Type cachedTypeObject; //TODO: rename
+    private readonly IEnumerable<PropertyInfo> cachedProperties;
 
-    /*
-     * EntityId is the entity id assigned by the graph database itself to the node and should always be unique.
-     * This property is for internal use to know if the node has been created in the database for example.
-     */
+    /// <summary>
+    /// EntityId is the entity id assigned by the graph database itself to the node and should always be unique.
+    /// This property is for internal use to know if the node has been created in the database.
+    /// </summary>
     internal long? EntityNodeId;
 
     public EntityNode()
     {
         _dbConnector = GromGraph.GetDbConnector();
-        t = GetType();
-        properties = Utils.GetEntityProperties(t);
-        foreach (var property in properties)
+        cachedTypeObject = GetType();
+        cachedProperties = Utils.GetEntityProperties(cachedTypeObject);
+        foreach (var property in cachedProperties)
         {
             // TODO: make sure types are not nullable or support nullable properties
             if (!_dbConnector.GetSupportedTypes().Contains(property.PropertyType))
@@ -37,20 +37,20 @@ public class EntityNode
         }
     }
 
-    /*
-     * Persists the node and all its ancestors and predecessors in the database.
-     * Node label will be the name of the class and the properties will be the properties with the NodeProperty attribute.
-     * Based on if EntityId is null or not this method knows if the node has to be updated or created.
-     */
+    /// <summary>
+    /// Persists the object instance that inherits from this class. If it allready exists in the database the node will be updated.
+    /// Node Label will be the name of the class and properties will be the ones with the NodeProperty attribute.
+    /// </summary>
+    /// <returns></returns>
     public async Task Persist()
     {
         if (EntityNodeId == null)
         {
-            EntityNodeId = await _dbConnector.CreateNode(this, properties, t.Name);
+            EntityNodeId = await _dbConnector.CreateNode(this, cachedProperties, cachedTypeObject.Name);
         }
         else
         {
-            await _dbConnector.UpdateNode(this, properties, t.Name, EntityNodeId.Value);
+            await _dbConnector.UpdateNode(this, cachedProperties, cachedTypeObject.Name, EntityNodeId.Value);
         }
 
         // Persist relationships
@@ -61,6 +61,10 @@ public class EntityNode
         }
     }
 
+    /// <summary>
+    /// Deletes the node in the database if it exists. Grom can only know this if the node has been persisted or retrieved with Retrieve<T>.
+    /// </summary>
+    /// <returns></returns>
     public async Task DeleteNode()
     {
         if (EntityNodeId is null)
@@ -76,7 +80,7 @@ public class EntityNode
     // TODO: check for optimisation
     private IEnumerable<RelationshipCollection> GetRelationshipFields()
     {
-        return t
+        return cachedTypeObject
             .GetFields(BindingFlags.Instance | BindingFlags.Public)
             .Where(x => typeof(RelationshipCollection).IsAssignableFrom(x.FieldType))
             .Select(x => x.GetValue(this).As<RelationshipCollection>());

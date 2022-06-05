@@ -24,8 +24,8 @@ public class GromNeo4jConnector : GromGraphDbConnector
     // TODO: support multiple ways to authenticate
     public GromNeo4jConnector(string uri, string username, string password)
     {
-        _gromNeo4JQueryBuilder = new GromNeo4jQueryBuilder();
-        _gromNeo4JResultMapper = new GromNeo4jResultMapper();
+        _gromNeo4JQueryBuilder = new GromNeo4jQueryBuilder(); //TODO: make static?
+        _gromNeo4JResultMapper = new GromNeo4jResultMapper(); //TODO: make static?
         _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(username, password));
     }
 
@@ -96,10 +96,10 @@ public class GromNeo4jConnector : GromGraphDbConnector
         {
             var result = (await cursor.SingleAsync());
             return _gromNeo4JResultMapper.Map<T>(result);
-
-        } catch (InvalidOperationException ex) //TODO: do this better
+        } 
+        catch (InvalidOperationException ex) //TODO: do this better
         {
-            if (ex.Message.Equals("The result is empty."))
+            if (ex.Message.Contains("The result is empty."))
             {
                 return null;
             }
@@ -107,8 +107,26 @@ public class GromNeo4jConnector : GromGraphDbConnector
         }
     }
 
-    internal override Task<IEnumerable<T>> GetNodes<T>(IConstraintNode state)
+    internal override async Task<IEnumerable<T>> GetNodes<T>(IConstraintNode state)
     {
-        throw new NotImplementedException();
+        var constraints = _gromNeo4JQueryBuilder.BuildQuery(state);
+        var query = string.Format(Query, constraints);
+
+        await using var session = _driver.AsyncSession();
+        var cursor = await session.RunAsync(query);
+
+        try
+        {
+            var result = (await cursor.ToListAsync());
+            return _gromNeo4JResultMapper.MapMultiple<T>(result);
+        }
+        catch (InvalidOperationException ex) //TODO: do this better
+        {
+            if (ex.Message.Contains("The result is empty."))
+            {
+                return null;
+            }
+            throw ex;
+        }
     }
 }

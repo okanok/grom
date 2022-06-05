@@ -19,4 +19,18 @@ internal class GromNeo4jResultMapper
         nodeInstance.EntityNodeId = node.Id;
         return nodeInstance;
     }
+
+    internal IEnumerable<T> MapMultiple<T>(List<IRecord> records, string nodeKey = "n") where T : EntityNode
+    {
+        var result = new List<T>();
+        foreach (var record in records)
+        {
+            var resultItem = Map<T>(record);
+            if (resultItem is not null)
+            {
+                result.Add(resultItem);
+            }
+        }
+        return result;
+    }
 }
