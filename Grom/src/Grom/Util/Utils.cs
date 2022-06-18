@@ -1,9 +1,11 @@
 ﻿using System.Globalization;
 using System.Reflection;
+using Grom.Entities;
 using Grom.Entities.Attributes;
 
 namespace Grom.Util;
 
+//TODO: split into logical classes
 internal class Utils
 {
     /// <summary>
@@ -54,5 +56,43 @@ internal class Utils
         PropertyInfo[] properties = t.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
         return properties.Where(p => p.CustomAttributes.Any(a => a.AttributeType == typeof(NodeProperty)));
+    }
+
+    internal static IEnumerable<PropertyInfo> GetRelationshipProperties(Type t)
+    {
+        PropertyInfo[] properties = t.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+
+        return properties.Where(p => p.CustomAttributes.Any(a => a.AttributeType == typeof(RelationshipProperty)));
+    }
+
+    internal static IEnumerable<(Type, Type, Type)> getAllRelatedTypesFromType(Type root, List<Type> discoveredTypes)
+    {
+        if(discoveredTypes.Contains(root))
+        {
+            // node allready discovered
+            return Enumerable.Empty<(Type, Type, Type)>();
+        }
+        var relationshipCollections = root
+            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Where(p => p.PropertyType.Name == "RelationshipCollection`2");
+        var relationships = relationshipCollections
+            .Select(r => ((Type)root, r.PropertyType.GenericTypeArguments[0], r.PropertyType.GenericTypeArguments[1]));
+        discoveredTypes.Add(root);
+        //Discover relationships of related classes
+        foreach(var relationship in relationships)
+        {
+            relationships.Concat(getAllRelatedTypesFromType(relationship.Item1, discoveredTypes));
+        }
+        return relationships;
+    }
+
+    internal static PropertyInfo? GetNodeRelationshipProperty(EntityNode node, Type relationshipType, Type childType)
+    {
+        return node.GetType()
+            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .FirstOrDefault(p => 
+                p.PropertyType.Name == "RelationshipCollection`2" 
+                && p.PropertyType.GenericTypeArguments.All(ta => ta.Equals(relationshipType) || ta.Equals(childType))
+            );
     }
 }

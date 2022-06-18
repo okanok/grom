@@ -43,7 +43,7 @@ public abstract class GromGraphDbConnector
     /// <param name="childNodeId">the unique id of the parent of the relationship, child should already exist in the database</param>
     /// <param name="parentNodeId">the unique id of the child of the relationship, parent should already exist in the database</param>
     /// <returns>the unique eneity id assigned to the relationship by the database</returns>
-    internal abstract Task<long> CreateDirectedRelationship(EntityDirectedRelationship relationship, IEnumerable<PropertyInfo> properties, long childNodeId, long parentNodeId);
+    internal abstract Task<long> CreateDirectedRelationship(RelationshipBase relationship, IEnumerable<PropertyInfo> properties, long childNodeId, long parentNodeId);
 
     /// <summary>
     /// Updates the relationship in the databse to be the same as given relationship entity 
@@ -51,7 +51,7 @@ public abstract class GromGraphDbConnector
     /// <param name="relationship">the entity that will be updated</param>
     /// <param name="properties">the properties of the entity that needs to be updated</param>
     /// <returns></returns>
-    internal abstract Task UpdateDirectedRelationship(EntityDirectedRelationship relationship, IEnumerable<PropertyInfo> properties);
+    internal abstract Task UpdateDirectedRelationship(RelationshipBase relationship, IEnumerable<PropertyInfo> properties);
 
     /// <summary>
     /// Deletes the relationship from the database

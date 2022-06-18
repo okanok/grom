@@ -15,7 +15,7 @@ public class GromNeo4jConnector : GromGraphDbConnector
     private static readonly string CreateDirectedRelationshipQueryBase = "MATCH (a), (b) WHERE id(a) = {0} AND id(b) = {1} CREATE (a)-[r:{2} {{{3}}}]->(b) RETURN id(r) as r";
     private static readonly string UpdateDirectedRelationshipQueryBase = "MATCH (a)-[r:{0}]->(b) WHERE id(r) = {1} SET r = {{{2}}};";
     private static readonly string DeleteDirectedRelationshipQueryBase = "MATCH (a)-[r]->(b) WHERE id(r) = {0} DELETE r";
-    private static readonly string Query = "MATCH (n) WHERE {0} RETURN n";
+    private static readonly string Query = "MATCH (n) WHERE {0} OPTIONAL MATCH (n)-[r*]->(p) RETURN n, last(r) AS r, p";
 
     private readonly IDriver _driver;
     private readonly GromNeo4jQueryBuilder _gromNeo4JQueryBuilder;
@@ -56,7 +56,7 @@ public class GromNeo4jConnector : GromGraphDbConnector
         await session.RunAsync(query);
     }
 
-    internal override async Task<long> CreateDirectedRelationship(EntityDirectedRelationship relationship, IEnumerable<PropertyInfo> properties, long childNodeId, long parentNodeId)
+    internal override async Task<long> CreateDirectedRelationship(RelationshipBase relationship, IEnumerable<PropertyInfo> properties, long childNodeId, long parentNodeId)
     {
         var props = string.Join(", ", properties.ToList().Select(x => x.Name + ": " + Utils.TypeStringify(x.GetValue(relationship))));
         var query = string.Format(CreateDirectedRelationshipQueryBase, parentNodeId, childNodeId, relationship.GetType().Name, props);
@@ -67,7 +67,7 @@ public class GromNeo4jConnector : GromGraphDbConnector
         return relationshipId;
     }
 
-    internal override async Task UpdateDirectedRelationship(EntityDirectedRelationship relationship, IEnumerable<PropertyInfo> properties)
+    internal override async Task UpdateDirectedRelationship(RelationshipBase relationship, IEnumerable<PropertyInfo> properties)
     {
         var props = string.Join(", ", properties.ToList().Select(x => x.Name + ": " + Utils.TypeStringify(x.GetValue(relationship))));
         var query = string.Format(UpdateDirectedRelationshipQueryBase, relationship.GetType().Name, relationship.EntityRelationshipId, props);
@@ -94,12 +94,12 @@ public class GromNeo4jConnector : GromGraphDbConnector
 
         try
         {
-            var result = (await cursor.SingleAsync());
+            var result = (await cursor.ToListAsync());
             return _gromNeo4JResultMapper.Map<T>(result);
         } 
         catch (InvalidOperationException ex) //TODO: do this better
         {
-            if (ex.Message.Contains("The result is empty."))
+            if (ex.Message.Contains("Sequence contains no elements"))
             {
                 return null;
             }

@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{37ADE9C4-C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GromPerformanceTest", "test\GromPerformanceTest\GromPerformanceTest.csproj", "{D7E2149C-7786-4D0A-8405-EDBD5B8BCA67}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Grom.IntegrationTests", "test\Grom.IntegrationTests\Grom.IntegrationTests.csproj", "{E941AA16-4EEA-400A-87AD-FD2D46DA705B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{D7E2149C-7786-4D0A-8405-EDBD5B8BCA67}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D7E2149C-7786-4D0A-8405-EDBD5B8BCA67}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D7E2149C-7786-4D0A-8405-EDBD5B8BCA67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E941AA16-4EEA-400A-87AD-FD2D46DA705B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E941AA16-4EEA-400A-87AD-FD2D46DA705B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E941AA16-4EEA-400A-87AD-FD2D46DA705B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E941AA16-4EEA-400A-87AD-FD2D46DA705B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -39,6 +45,7 @@ Global
 		{66223C1F-3958-4108-9C0D-4A646A10F0FD} = {7FC299C4-9AF1-4991-9FC6-0EC8AC1FB525}
 		{7959399E-E070-4ECE-9682-F3E1975074CD} = {37ADE9C4-CE94-4AB2-91A8-310D040C79A5}
 		{D7E2149C-7786-4D0A-8405-EDBD5B8BCA67} = {37ADE9C4-CE94-4AB2-91A8-310D040C79A5}
+		{E941AA16-4EEA-400A-87AD-FD2D46DA705B} = {37ADE9C4-CE94-4AB2-91A8-310D040C79A5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {457F52E9-8426-4DEC-83AF-616B0D610745}

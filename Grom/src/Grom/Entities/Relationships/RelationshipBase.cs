@@ -1,11 +1,11 @@
-﻿using System.Reflection;
-using Grom.Entities.Attributes;
+﻿using Grom.Entities.Attributes;
 using Grom.GraphDbConnectors;
 using Grom.Util.Exceptions;
+using System.Reflection;
 
 namespace Grom.Entities.Relationships;
 
-public class EntityDirectedRelationship
+public abstract class RelationshipBase
 {
     private readonly GromGraphDbConnector _dbConnector;
 
@@ -15,12 +15,9 @@ public class EntityDirectedRelationship
      */
     internal long? EntityRelationshipId;
 
-    public EntityNode Child { get; }
-
-    public EntityDirectedRelationship(EntityNode child)
+    public RelationshipBase()
     {
         _dbConnector = GromGraph.GetDbConnector();
-        Child = child;
         var properties = GetEntityProperties();
         foreach (var property in properties)
         {
@@ -33,26 +30,25 @@ public class EntityDirectedRelationship
         }
     }
 
-    internal async Task Persist(long? parentId)
+    internal async Task Persist(long? childId, long? parentId)
     {
-        await Child.Persist();
         var fld = GetEntityProperties();
         if (EntityRelationshipId is null)
         {
-            if (!Child.EntityNodeId.HasValue || !parentId.HasValue)
+            if (!childId.HasValue || !parentId.HasValue)
             {
                 // TODO: throw exception
                 return;
             }
-            EntityRelationshipId = await _dbConnector.CreateDirectedRelationship(this, fld, Child.EntityNodeId.Value, parentId.Value);
+            EntityRelationshipId = await _dbConnector.CreateDirectedRelationship(this, fld, childId.Value, parentId.Value);
             return;
         }
         await _dbConnector.UpdateDirectedRelationship(this, fld);
 
     }
 
-    // For now public to make deleting relationships more natural.
-    public async Task Delete()
+    // For now internal to force use of remove methods in RelationshipCollection.
+    internal async Task Delete()
     {
         if (EntityRelationshipId is null)
         {
@@ -63,7 +59,7 @@ public class EntityDirectedRelationship
 
     }
 
-    // TODO: check for optimization
+    // TODO: check for optimization, use from Utils class
     private IEnumerable<PropertyInfo> GetEntityProperties()
     {
         Type t = GetType();

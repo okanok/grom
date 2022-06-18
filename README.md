@@ -1,14 +1,16 @@
 # Grom
-Grom, a .NET graph database object relational mapper
+Grom, a .NET graph database object relational mapper.
 
 Grom is an easy to use, low config ORM that lets you map your C# classes to nodes and relationships in various graph databases.
-This project is currently not production ready as its still in beta. Version 1.0 is expected to be released Q4 2022. 
+This project is currently not production ready as its still in beta. Version 1.0 is expected to release in Q4 2022. 
 
 Since this project is open source and currently worked on by only the maintainer a 'stabilizing' phase was needed in which a beta version is released so bugs can be found and fixed and major missing features can be requested before an actual production ready version is released.
 
+Feel free to try it out and if some feature is missing don't hessitate to open a discussion!  
+
 ## Getting started
 
-Configuring Grom is easy, it only requires a database connection to be given to GromGraph.CreateConnection(). This class will act as a singleton and use the given connection in the background. You don't need to instantiate this class or call it anywhere.
+Configuring Grom is easy, it only requires a database connection to be given to GromGraph.CreateConnection(). This class will act as a singleton and use the given connection in the background. You don't need to instantiate this class or call it anywhere after running CreateConnection once.
 
 ### Neo4J
 To configure Grom for Neo4J simply use:
@@ -19,8 +21,8 @@ Any valid instance of GromNeo4jConnector can be passed, so you are not restricte
 
 ## Features
 
-### mapping a class
-To map a class as a node you have to do two things: inherit from EntityNode and annotate each property you want to map with NodeProperty.
+### Mapping a class
+To map a class as a node you have to do two things: inherit from EntityNode and annotate each property you want to map with NodeProperty. Grom does however require an empty constructor for all nodes.
 
 A mapped class can be as simple as:
 ```
@@ -35,18 +37,18 @@ public class Person : EntityNode
 ```
 Currently integers, booleans, strings, floats and longs are supported. Version 1.0 will also support Dates and DateTimes.
 
-### persisting an object
+### Persisting a node
 
-To persist a node simply call Persist() on any class you mapped.
+To persist a node simply call Persist() on any of your objects that inherit from EntityNode.
 ```
 var personNode = new Person("John", 25);
 await personNode.Persist();
 ```
 Grom is fully asynchronous so make sure you await when required. 
 
-### updating an object
+### Updating a node
 
-Updating an node is also done by calling Persist(). Grom will figure out if the node is allready created or not. 
+Updating a node is also done by calling Persist(). Grom will figure out if the node is allready created or not. 
 ```
 var personNode = new Person("John", 25);
 await personNode.Persist();
@@ -54,9 +56,9 @@ await personNode.Persist();
 personNode.Age = 30;
 await personNode.Persist();
 ```
-Note that Grom only knows that an node exists if you have called Persist() on it or have retrieved it with Retrieve. It wont check if a node exists with the same properties in the database! 
+Do note that Grom only knows that a node exists if you have called Persist() on it or have retrieved it with Retrieve. It wont check if a node exists with the same properties in the database! 
 
-### deleting a node
+### Deleting a node
 
 A node can be deleted by calling DeleteNode().
 ```
@@ -64,17 +66,72 @@ await personNode.DeleteNode();
 ```
 The actual object in your code will still exist but the node and all its relationships to other nodes will be deleted in the database. So you could call Persist() again. and keep using this object.
 
-### retrieving a node
+### Retrieving a node
 
-Nodes can be retrieved using Retrieve\<T>. Nodes can be filtered by simply giving a lambda function that has a single parameter (the source node) and returns a boolean. Grom turns the lambda function into a query for you.
+Nodes can be retrieved using Retrieve\<T>. Nodes can be filtered by simply giving a lambda function that has a single parameter (the root node) and returns a boolean. Grom turns the lambda function into a query for you.
 ```
 var personNode = await Retrieve<Person>
     .Where(p => p.Name == "John")
     .GetSingle();
 ```    
-Boolean operators such as &&, ||, !, ==, !=, >, <, >= and <= are supported. Properties can be compared to constants, references to variables, method calls and properties in objects. Do note however that Grom can't turn everything a lambda can do into a query. Try to keep the lambda simple.
+Boolean operators such as &&, ||, !, ==, !=, >, <, >= and <= are supported. Properties can be compared to constants, variables, method calls with no parameters and properties or fields in objects. Do note however that Grom can't turn everything a lambda can do into a query. Try to keep the lambda simple.
 
-### relationships
+### Relationships
+
+For now only directed relationships are supported. Release 1.0 will also include support for undirected relationships.
+
+To define a relationship between nodes we first need to create a relationship entity. The entity needs to inherit from RelationshipBase and needs an empty constructor. Each property you want to map can be annotated with RelationshipProperty. A relationship entity will look something like this:
+```
+public class Knows : RelationshipBase
+{
+    [RelationshipProperty]
+    public int ForYears { get; set; }
+
+    public Knows()
+    {
+    }
+
+    public Knows(int forYears)
+    {
+        ForYears = forYears;
+
+    }
+}
+```
+To define a relationship between nodes simply add a new property with type RelationshipCollection. This collection needs two arguments: a relationship type and a target node type. 
+```
+public class Person : EntityNode
+{
+    [NodeProperty]
+    public string Name { get; set; }
+
+    [NodeProperty]
+    public int Age { get; set; }
+
+    public RelationshipCollection<Knows, Person> knownPeople { get; set; } = new();
+
+    public Person()
+    {
+    }
+
+    public Person(string name, int age)
+    {
+        Name = name;
+        Age = age;
+    }
+}
+```
+
+A relationship is added by adding an item to this collection: 
+```
+var person1 = new Person("John", 25);
+var person2 = new Person("Doe", 26);
+person1.knownPeople.Add(new Knows(5), person2);
+await person1.Persist();
+```
+Calling Persist() will, in adition to the node, also persist or update any descendant node and relationship. Updating works the same way as with nodes, change the property and call Persist() again on any ancestor node.
+
+To delete a node you can use the Remove, RemoveAt or RemoveRange methods on RelationshipCollection. They work the same as in a List\<T>. 
 
 ## Supported Databases
 

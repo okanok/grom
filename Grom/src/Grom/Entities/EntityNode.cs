@@ -78,12 +78,12 @@ public abstract class EntityNode
     }
 
     // TODO: check for optimisation
-    private IEnumerable<RelationshipCollection> GetRelationshipFields()
+    private IEnumerable<IRelationshipCollection> GetRelationshipFields()
     {
         return cachedTypeObject
-            .GetFields(BindingFlags.Instance | BindingFlags.Public)
-            .Where(x => typeof(RelationshipCollection).IsAssignableFrom(x.FieldType))
-            .Select(x => x.GetValue(this).As<RelationshipCollection>());
+            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Where(x => typeof(IRelationshipCollection).IsAssignableFrom(x.PropertyType))
+            .Select(x => x.GetValue(this).As<IRelationshipCollection>());
 
     }
 }
