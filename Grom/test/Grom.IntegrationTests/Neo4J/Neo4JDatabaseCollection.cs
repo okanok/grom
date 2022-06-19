@@ -1,11 +1,12 @@
 ﻿using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using Grom.GraphDbConnectors.Neo4J;
+using Neo4j.Driver;
 
 namespace Grom.IntegrationTests.Neo4J;
 
 public class Neo4JFixture : IDisposable
 {
+    private static readonly TestcontainersContainer? testcontainer;
 
     static Neo4JFixture()
     {
@@ -20,14 +21,14 @@ public class Neo4JFixture : IDisposable
             .UntilPortIsAvailable(7687)
           );
 
-        var testcontainers = testcontainersBuilder.Build();
-        testcontainers.StartAsync().Wait();
-        GromGraph.CreateConnection(new GromNeo4jConnector("bolt://localhost:7687", "neo4j", "test"));
+        testcontainer = testcontainersBuilder.Build();
+        testcontainer.StartAsync().Wait();
+        GromGraph.CreateConnection(GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.Basic("neo4j", "test")));
     }
 
     public void Dispose()
     {
-
+        testcontainer!.DisposeAsync().AsTask().Wait();
     }
 }
 

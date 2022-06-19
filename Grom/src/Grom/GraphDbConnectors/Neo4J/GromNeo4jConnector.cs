@@ -7,6 +7,9 @@ using Neo4j.Driver;
 
 namespace Grom.GraphDbConnectors.Neo4J;
 
+/// <summary>
+/// Neo4J implementation of the GromGraphDbConnector class
+/// </summary>
 public class GromNeo4jConnector : GromGraphDbConnector
 {
     private static readonly string CreateNodeQueryBase = "CREATE (n:{0} {{{1}}}) RETURN id(n) as r;";
@@ -21,12 +24,11 @@ public class GromNeo4jConnector : GromGraphDbConnector
     private readonly GromNeo4jQueryBuilder _gromNeo4JQueryBuilder;
     private readonly GromNeo4jResultMapper _gromNeo4JResultMapper;
 
-    // TODO: support multiple ways to authenticate
-    public GromNeo4jConnector(string uri, string username, string password)
+    public GromNeo4jConnector(IDriver driver)
     {
         _gromNeo4JQueryBuilder = new GromNeo4jQueryBuilder(); //TODO: make static?
         _gromNeo4JResultMapper = new GromNeo4jResultMapper(); //TODO: make static?
-        _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(username, password));
+        _driver = driver;
     }
 
     internal override async Task<long> CreateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel)

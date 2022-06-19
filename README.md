@@ -10,19 +10,19 @@ Feel free to try it out and if some feature is missing don't hessitate to open a
 
 ## Getting started
 
-Configuring Grom is easy, it only requires a database connection to be given to GromGraph.CreateConnection(). This class will act as a singleton and use the given connection in the background. You don't need to instantiate this class or call it anywhere after running CreateConnection once.
+Configuring Grom is easy, it only requires a database connection to be given to GromGraph.CreateConnection(...). You don't need to instantiate this class or call it anywhere after running CreateConnection once.
 
 ### Neo4J
 To configure Grom for Neo4J simply use:
 ```
-GromGraph.CreateConnection(new GromNeo4jConnector("bolt://localhost:7687", "neo4j", "test"));
+GromGraph.CreateConnection(GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.Basic("neo4j", "test")));
 ```
-Any valid instance of GromNeo4jConnector can be passed, so you are not restricted to username/password authentication.
+Any valid instance of Neo4J IDriver can be passed, so you are not restricted to username/password authentication.
 
 ## Features
 
 ### Mapping a class
-To map a class as a node you have to do two things: inherit from EntityNode and annotate each property you want to map with NodeProperty. Grom does however require an empty constructor for all nodes.
+To map a class as a node you have to do two things: inherit from EntityNode and annotate each property you want to map with NodeProperty. Grom does also require an empty constructor for all nodes.
 
 A mapped class can be as simple as:
 ```

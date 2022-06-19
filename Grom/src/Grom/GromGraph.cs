@@ -1,38 +1,45 @@
 ﻿using Grom.GraphDbConnectors;
+using Grom.GraphDbConnectors.Neo4J;
+using Grom.Util.Exceptions;
+using Neo4j.Driver;
 
 namespace Grom;
 
 public class GromGraph
 {
-    // TODO: make this async and transaction friendly
-    // TODO: make this also 
-    private static GromGraph? _connectionInstance;
     private static GromGraphDbConnector? _dbConnector;
 
     private GromGraph()
     {
     }
 
-    public static GromGraph CreateConnection(GromGraphDbConnector dbConnector)
+    /// <summary>
+    /// Makes sure Grom will use given Neo4J driver to create connection in underlying methods that require calls to the database
+    /// </summary>
+    /// <param name="driver">Any valid instance created with Neo4J GraphDatabase.Driver(...)</param>
+    /// <returns></returns>
+    public static void CreateConnection(IDriver driver)
     {
-        _dbConnector = dbConnector;
-        if (_connectionInstance == null)
-        {
-            _connectionInstance = new GromGraph();
-        }
-        return _connectionInstance;
+        //TODO: check if we should warn user if he is overwriting an existing connection?
+        _dbConnector = new GromNeo4jConnector(driver);
+    }
+
+    /// <summary>
+    /// Helper method to dispose the active connection. 
+    /// </summary>
+    public static void DisposeConnection()
+    {
+        _dbConnector = null;
     }
 
     internal static GromGraphDbConnector GetDbConnector()
     {
         if (_dbConnector == null)
         {
-            // TODO: custom exception
-            throw new Exception("Database connection not initialized yet! First create a connection with CreateConnection() before retrieving a session.");
+            throw new ConnectionNotInitializedException();
         }
         else
         {
-            // TODO: support session for specific database name
             return _dbConnector;
         }
     }
