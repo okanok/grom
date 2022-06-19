@@ -75,7 +75,7 @@ public abstract class GromGraphDbConnector
     /// <typeparam name="T"> The node that will be retrieved </typeparam>
     /// <param name="state"> A state object containing all filter information needed to build a query </param>
     /// <returns>null if no result found</returns>
-    internal abstract Task<T?> GetSingleNode<T>(IConstraintNode state) where T : EntityNode;
+    internal abstract Task<T> GetSingleNode<T>(IConstraintNode state) where T : EntityNode;
 
     /// <summary>
     /// Retrieves all nodes from the graph database matching the given filters

@@ -17,7 +17,7 @@ internal class ExpressionToGromDSLMapper<T>
         {
             throw new ArgumentException("Where clause expects exactly one parameter which represents the node for which you want to filter properties!");
         }
-        parameterName = expr.Parameters.First().Name;
+        parameterName = expr.Parameters.First().Name!;
     }
 
     internal IConstraintNode Map()
@@ -51,7 +51,6 @@ internal class ExpressionToGromDSLMapper<T>
                 throw new InvalidOperationException("Expression not supported! Only Logical operators And, Or, Not and comparisons ==, !=, >, <, <= and >= are supported.");
 
         }
-        return null;
     }
 
 

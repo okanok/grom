@@ -37,14 +37,12 @@ public abstract class RelationshipBase
         {
             if (!childId.HasValue || !parentId.HasValue)
             {
-                // TODO: throw exception
-                return;
+                throw new InvalidOperationException("Cannot create relationship when child or parent node is not created!");
             }
             EntityRelationshipId = await _dbConnector.CreateDirectedRelationship(this, fld, childId.Value, parentId.Value);
             return;
         }
         await _dbConnector.UpdateDirectedRelationship(this, fld);
-
     }
 
     // For now internal to force use of remove methods in RelationshipCollection.

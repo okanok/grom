@@ -177,5 +177,5 @@ public class NodeWithDateTime : EntityNode
 public class NodeWithList : EntityNode
 {
     [NodeProperty]
-    public int[] IntArray { get; set; }
+    public int[] IntArray { get; set; } = Array.Empty<int>();
 }

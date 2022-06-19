@@ -73,9 +73,4 @@ public class RetrievingNodesTests: IClassFixture<Neo4JTestBase>
         Assert.NotNull(node.SingleOrDefault(n => n.Name == "Drogo"));
         Assert.NotNull(node.SingleOrDefault(n => n.Name == "Khaleesi"));
     }
-
-    public void Dispose()
-    {
-        throw new NotImplementedException();
-    }
 }

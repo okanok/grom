@@ -44,7 +44,7 @@ public abstract class EntityNode
     /// <returns></returns>
     public async Task Persist()
     {
-        if (EntityNodeId == null)
+        if (!EntityNodeId.HasValue)
         {
             EntityNodeId = await _dbConnector.CreateNode(this, cachedProperties, cachedTypeObject.Name);
         }

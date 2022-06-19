@@ -7,9 +7,9 @@ namespace Grom.GraphDbConnectors.Neo4J;
 
 internal class GromNeo4jResultMapper
 {
-    internal T Map<T>(List<IRecord> records, string nodeKey = "n", string relationshipKey = "r", string parentKey = "p") where T : EntityNode
+    internal T? Map<T>(List<IRecord> records, string nodeKey = "n", string relationshipKey = "r", string parentKey = "p") where T : EntityNode
     {
-        return MapMultiple<T>(records, nodeKey, relationshipKey, parentKey).First(); //TODO: maybe give error when multiple nodes are found? 
+        return MapMultiple<T>(records, nodeKey, relationshipKey, parentKey).FirstOrDefault(); //TODO: maybe give error when multiple nodes are found? 
 
     }
 
@@ -51,6 +51,10 @@ internal class GromNeo4jResultMapper
             {
                 var relationship = (IRelationship)record[relationshipKey];
                 var relationshipType = relationshipsStructure.FirstOrDefault(t => t.Item2.Name.Equals(relationship.Type)).Item2;
+                if(relationshipType is null)
+                {
+                    throw new InvalidOperationException($"Cannot map relationship type {relationship.Type} to a class!");
+                }
                 var mappedRelationship = MapRelationshipToObject(relationship, relationshipType);
                 var parent = nodes[relationship.StartNodeId];
                 var child = nodes[relationship.EndNodeId];
@@ -63,7 +67,7 @@ internal class GromNeo4jResultMapper
 
     internal EntityNode MapNodeToObject(INode node, Type t)
     {
-        var nodeInstance = (EntityNode)Activator.CreateInstance(t);
+        var nodeInstance = (EntityNode)Activator.CreateInstance(t)!;
         if (nodeInstance is null)
         {
             throw new ArgumentException($"Cant create an instance of {t.Name}!");
@@ -80,7 +84,7 @@ internal class GromNeo4jResultMapper
 
     internal RelationshipBase MapRelationshipToObject(IRelationship relationship, Type t)
     {
-        var relationshipInstance = (RelationshipBase)Activator.CreateInstance(t);
+        var relationshipInstance = (RelationshipBase)Activator.CreateInstance(t)!;
         if (relationshipInstance is null)
         {
             throw new ArgumentException($"Cant create an instance of {t.Name}!");
@@ -101,9 +105,13 @@ internal class GromNeo4jResultMapper
         var relationshipProperty = Utils.GetNodeRelationshipProperty(parent, relationship.GetType(), child.GetType());
         if(relationshipProperty is null)
         {
-            return;
+            throw new InvalidOperationException($"Cannot find relationship collection in class {nameof(parent)} with relationhship type {nameof(relationship)} and child {nameof(child)}");
         }
         var relationshipCollection = relationshipProperty.GetValue(parent, null) as IRelationshipCollection;
+        if(relationshipCollection is null)
+        {
+            throw new InvalidOperationException($"Could not retrieve reference to collection {relationshipProperty.Name} from class {nameof(parent)}");
+        }
         relationshipCollection.Add(relationship, child); 
     }
 }

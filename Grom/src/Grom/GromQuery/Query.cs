@@ -51,7 +51,7 @@ public class DbRetriever<T> where T : EntityNode
     /// Retrieves a single node 
     /// </summary>
     /// <returns></returns>
-    public async Task<T?> GetSingle()
+    public async Task<T> GetSingle()
     {
         return await GromGraph
             .GetDbConnector()

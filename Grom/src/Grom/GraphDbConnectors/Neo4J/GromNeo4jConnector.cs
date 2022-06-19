@@ -64,7 +64,7 @@ public class GromNeo4jConnector : GromGraphDbConnector
     {
         var props = string.Join(", ", properties.ToList().Select(x => x.Name + ": " + Utils.TypeStringify(x.GetValue(relationship))));
         var query = string.Format(CreateDirectedRelationshipQueryBase, parentNodeId, childNodeId, relationship.GetType().Name, props);
-
+        
         await using var session = _driver.AsyncSession();
         var cursor = await session.RunAsync(query);
         var relationshipId = await cursor.SingleAsync(r => r["r"].As<long>());
@@ -100,11 +100,11 @@ public class GromNeo4jConnector : GromGraphDbConnector
         try
         {
             var result = await cursor.ToListAsync();
-            return _gromNeo4JResultMapper.Map<T>(result);
+            return _gromNeo4JResultMapper.Map<T>(result); // Can be null if result is not found
         } 
         catch (InvalidOperationException ex) //TODO: do this better
         {
-            if (ex.Message.Contains("Sequence contains no elements"))
+            if (ex.Message.Equals("Sequence contains no elements"))
             {
                 return null;
             }
