@@ -23,4 +23,4 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Run integration tests
-      run: dotnet test ./test/Grom.IntegrationTests/Grom.IntegrationTests.csproj --no-build --verbosity normal
+      run: dotnet test ./test/Grom.IntegrationTests/Grom.IntegrationTests.csproj
