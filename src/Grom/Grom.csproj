@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Platforms>AnyCPU</Platforms>
+    <RootNamespace>Grom</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Grom</PackageId>
+    <Authors>oko404</Authors>
+    <PackageTags>orm;dotnet;graph;graph-db;graph-orm</PackageTags>
+    <Description>
+      Grom is a graph database object relational mapper.
+    </Description>
+    <PackageProjectUrl>https://github.com/okanok/grom</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/okanok/grom</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Neo4j.Driver.Extensions" Version="1.0.14" />
+    <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
+  </ItemGroup>
+  <ItemGroup>
+      <Content Include="../../LICENSE.txt" Pack="true" PackagePath=""/>
+      <Content Include="../../README.md" Pack="true" PackagePath=""/>
+  </ItemGroup>
+
+</Project>
