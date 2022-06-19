@@ -30,16 +30,12 @@ public abstract class RelationshipBase
         }
     }
 
-    internal async Task Persist(long? childId, long? parentId)
+    internal async Task Persist(long childId, long parentId)
     {
         var fld = GetEntityProperties();
         if (EntityRelationshipId is null)
         {
-            if (!childId.HasValue || !parentId.HasValue)
-            {
-                throw new InvalidOperationException("Cannot create relationship when child or parent node is not created!");
-            }
-            EntityRelationshipId = await _dbConnector.CreateDirectedRelationship(this, fld, childId.Value, parentId.Value);
+            EntityRelationshipId = await _dbConnector.CreateDirectedRelationship(this, fld, childId, parentId);
             return;
         }
         await _dbConnector.UpdateDirectedRelationship(this, fld);

@@ -57,7 +57,7 @@ public abstract class EntityNode
         var relationships = GetRelationshipFields();
         foreach (var relationship in relationships)
         {
-            await relationship.Persist(EntityNodeId);
+            await relationship.Persist(EntityNodeId.Value);
         }
     }
 
