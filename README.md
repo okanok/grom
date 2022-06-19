@@ -2,11 +2,11 @@
 Grom, a .NET graph database object relational mapper.
 
 Grom is an easy to use, low config ORM that lets you map your C# classes to nodes and relationships in various graph databases.
-This project is currently not production ready as its still in beta. Version 1.0 is expected to release in Q4 2022. 
+This project is currently not production ready as it's still in beta. Version 1.0 is expected to release in Q4 2022. 
 
-Since this project is open source and currently worked on by only the maintainer a 'stabilizing' phase was needed in which a beta version is released so bugs can be found and fixed and major missing features can be requested before an actual production ready version is released.
+Since this project is open source and currently only worked on by the maintainer a 'beta' phase was needed in which a pre-production version is released so bugs can be found and fixed and important missing features can be requested before an actual production ready version is released.
 
-Feel free to try it out and if some feature is missing don't hessitate to open a discussion!  
+Feel free to try it out and if some feature is missing don't hesitate to open an issue!  
 
 ## Getting started
 

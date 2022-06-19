@@ -1,5 +1,4 @@
-﻿using Grom.GraphDbConnectors.Neo4J;
-using Neo4j.Driver;
+﻿using Neo4j.Driver;
 
 namespace Grom.IntegrationTests.Neo4J;
 

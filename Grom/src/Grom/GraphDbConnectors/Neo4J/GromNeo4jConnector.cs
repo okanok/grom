@@ -37,7 +37,9 @@ public class GromNeo4jConnector : GromGraphDbConnector
         var query = string.Format(CreateNodeQueryBase, nodeLabel, props);
 
         await using var session = _driver.AsyncSession();
-        return await session.RunAsync(query).Result.SingleAsync(r => r["r"].As<long>());
+        var cursor = await session.RunAsync(query);
+        var result = await cursor.SingleAsync(r => r["r"].As<long>());
+        return result;
     }
 
     internal override async Task DeleteNode(long nodeId)
@@ -64,7 +66,8 @@ public class GromNeo4jConnector : GromGraphDbConnector
         var query = string.Format(CreateDirectedRelationshipQueryBase, parentNodeId, childNodeId, relationship.GetType().Name, props);
 
         await using var session = _driver.AsyncSession();
-        var relationshipId = await session.RunAsync(query).Result.SingleAsync(r => r["r"].As<long>());
+        var cursor = await session.RunAsync(query);
+        var relationshipId = await cursor.SingleAsync(r => r["r"].As<long>());
 
         return relationshipId;
     }
@@ -96,7 +99,7 @@ public class GromNeo4jConnector : GromGraphDbConnector
 
         try
         {
-            var result = (await cursor.ToListAsync());
+            var result = await cursor.ToListAsync();
             return _gromNeo4JResultMapper.Map<T>(result);
         } 
         catch (InvalidOperationException ex) //TODO: do this better
@@ -124,9 +127,9 @@ public class GromNeo4jConnector : GromGraphDbConnector
         }
         catch (InvalidOperationException ex) //TODO: do this better
         {
-            if (ex.Message.Contains("The result is empty."))
+            if (ex.Message.Contains("Sequence contains no elements"))
             {
-                return null;
+                return new List<T>();
             }
             throw ex;
         }
