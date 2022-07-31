@@ -34,7 +34,7 @@ jobs:
     - name: Get release version from branch name
       run: |
         echo "PACKAGE_VERSION=$(echo ${GITHUB_REF##*/} | tr / -)" >> $GITHUB_ENV 
-        echo ${{ env.PACKAGE_VERSION }}
+        echo $PACKAGE_VERSION
 
   publish:
     if: ${{ contains(fromJson('["/release/"]'), github.ref_name) }}
