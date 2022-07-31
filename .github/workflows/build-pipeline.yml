@@ -19,6 +19,9 @@ jobs:
       with:
         dotnet-version: 6.0.x
 
+    - name: Clean project
+      run: dotnet clean
+
     - name: Restore dependencies
       run: dotnet restore
 
@@ -29,14 +32,13 @@ jobs:
       run: dotnet test ./test/Grom.IntegrationTests/Grom.IntegrationTests.csproj --no-restore --no-build
 
   publish:
-    if: ${{ false }} #${{ contains(fromJson('["main"]'), github.ref_name) }}
+    if: ${{ contains(fromJson('["/release/"]'), github.ref_name) }}
     needs: build
     runs-on: ubuntu-latest
     
     env:
       NUGET_SOURCE: https://api.nuget.org/v3/index.json
       NUGET_KEY: ${{ secrets.NUGET_KEY }}
-      PACKAGE_VERSION: 
 
     steps:
     - name: Checkout
@@ -47,13 +49,22 @@ jobs:
       with:
         dotnet-version: 6.0.x
 
-    - name: Build
-      run: dotnet build -c release
-    
-    - name: Pack
-      run: dotnet pack -c release -p:PackageVersion=0.1.0-alpha -o ./ ./src/Grom/Grom.csproj
+    - name: Get release version from branch name
+      run: |
+        echo github.ref_name
+        echo "PACKAGE_VERSION=$(echo ${${github.ref_name}##*/} | tr / -)" >> $GITHUB_ENV 
+        echo $PACKAGE_VERSION
 
-    - name: Publish
-      run: dotnet nuget push Grom.0.1.0-alpha.nupkg --api-key $NUGET_KEY --source $NUGET_SOURCE
+    # - name: Clean project
+    #   run: dotnet clean
+
+    # - name: Build
+    #   run: dotnet build -c release
+    
+    # - name: Pack
+    #   run: dotnet pack -c release -p:PackageVersion=0.1.0-alpha -o ./ ./src/Grom/Grom.csproj
+
+    # - name: Publish
+    #   run: dotnet nuget push Grom.0.1.0-alpha.nupkg --api-key $NUGET_KEY --source $NUGET_SOURCE
 
 
