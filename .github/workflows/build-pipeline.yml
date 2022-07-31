@@ -52,7 +52,7 @@ jobs:
 
     - name: Get release version from branch name
       run: |
-        echo "PACKAGE_VERSION=$(echo ${GITHUB_REF##*/} | tr / -)" >> $GITHUB_ENV
+        echo "PACKAGE_VERSION=$(echo ${GITHUB_HEAD_REF##*/} | tr / -)" >> $GITHUB_ENV
     
     - name: Echo release number
       run: echo version number is $PACKAGE_VERSION
