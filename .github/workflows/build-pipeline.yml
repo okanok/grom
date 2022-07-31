@@ -30,23 +30,17 @@ jobs:
 
     - name: Run integration tests
       run: dotnet test ./test/Grom.IntegrationTests/Grom.IntegrationTests.csproj --no-restore --no-build
-    
-    - name: Get release version from branch name
-      run: |
-        echo "PACKAGE_VERSION=$(echo ${GITHUB_REF##*/} | tr / -)" >> $GITHUB_ENV
-    
-    - name: test
-      run: echo $PACKAGE_VERSION
 
   publish:
-    if: ${{ contains(fromJson('["/release/"]'), github.ref_name) }}
+    if: success() && contains('/release/'), github.ref_name)
     needs: build
     runs-on: ubuntu-latest
-    
+  
     env:
       NUGET_SOURCE: https://api.nuget.org/v3/index.json
       NUGET_KEY: ${{ secrets.NUGET_KEY }}
-
+    environment: production
+  
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -58,19 +52,21 @@ jobs:
 
     - name: Get release version from branch name
       run: |
-        echo "PACKAGE_VERSION=$(echo ${GITHUB_REF##*/} | tr / -)" >> $GITHUB_ENV 
-        echo $PACKAGE_VERSION
-
-    # - name: Clean project
-    #   run: dotnet clean
-
-    # - name: Build
-    #   run: dotnet build -c release
+        echo "PACKAGE_VERSION=$(echo ${GITHUB_REF##*/} | tr / -)" >> $GITHUB_ENV
     
-    # - name: Pack
-    #   run: dotnet pack -c release -p:PackageVersion=0.1.0-alpha -o ./ ./src/Grom/Grom.csproj
+    - name: Echo release number
+      run: echo version number is $PACKAGE_VERSION
 
-    # - name: Publish
-    #   run: dotnet nuget push Grom.0.1.0-alpha.nupkg --api-key $NUGET_KEY --source $NUGET_SOURCE
+    - name: Clean project
+      run: dotnet clean
+
+    - name: Build
+      run: dotnet build -c release
+    
+    - name: Pack
+      run: dotnet pack -c release -p:PackageVersion=$PACKAGE_VERSION -o ./ ./src/Grom/Grom.csproj
+
+    - name: Publish
+      run: dotnet nuget push Grom.$PACKAGE_VERSION.nupkg --api-key $NUGET_KEY --source $NUGET_SOURCE
 
 
