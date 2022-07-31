@@ -30,6 +30,10 @@ jobs:
 
     - name: Run integration tests
       run: dotnet test ./test/Grom.IntegrationTests/Grom.IntegrationTests.csproj --no-restore --no-build
+    
+    - name: Get release version from branch name
+      run: |
+        echo github.ref_name
 
   publish:
     if: ${{ contains(fromJson('["/release/"]'), github.ref_name) }}
