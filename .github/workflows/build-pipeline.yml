@@ -33,7 +33,7 @@ jobs:
     
     - name: Get release version from branch name
       run: |
-        echo "PACKAGE_VERSION=$(echo ${$GITHUB_REF##*/} | tr / -)" >> $GITHUB_ENV 
+        echo "PACKAGE_VERSION=$(echo ${GITHUB_REF##*/} | tr / -)" >> $GITHUB_ENV 
         echo $PACKAGE_VERSION
 
   publish:
@@ -56,7 +56,8 @@ jobs:
 
     - name: Get release version from branch name
       run: |
-        echo "PACKAGE_VERSION=$(echo ${$GITHUB_REF##*/} | tr / -)" >> $GITHUB_ENV 
+        echo github.ref_name
+        echo "PACKAGE_VERSION=$(echo ${${$GITHUB_REF}##*/} | tr / -)" >> $GITHUB_ENV 
         echo $PACKAGE_VERSION
 
     # - name: Clean project
