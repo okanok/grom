@@ -33,7 +33,8 @@ jobs:
     
     - name: Get release version from branch name
       run: |
-        echo $GITHUB_REF
+        echo "PACKAGE_VERSION=$(echo ${$GITHUB_REF##*/} | tr / -)" >> $GITHUB_ENV 
+        echo $PACKAGE_VERSION
 
   publish:
     if: ${{ contains(fromJson('["/release/"]'), github.ref_name) }}
@@ -55,8 +56,7 @@ jobs:
 
     - name: Get release version from branch name
       run: |
-        echo github.ref_name
-        echo "PACKAGE_VERSION=$(echo ${${github.ref_name}##*/} | tr / -)" >> $GITHUB_ENV 
+        echo "PACKAGE_VERSION=$(echo ${$GITHUB_REF##*/} | tr / -)" >> $GITHUB_ENV 
         echo $PACKAGE_VERSION
 
     # - name: Clean project
