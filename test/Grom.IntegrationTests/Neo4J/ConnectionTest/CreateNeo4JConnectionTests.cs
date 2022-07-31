@@ -62,7 +62,7 @@ public class Neo4JConnectionFixture : IDisposable
     }
 }
 
-[CollectionDefinition("neo4j-connectiontest-collection")]
+[CollectionDefinition("neo4j-connectiontest-collection", DisableParallelization = true)]
 public class Neo4JDatabaseConnectionTestCollection : ICollectionFixture<Neo4JConnectionFixture>
 {
 }

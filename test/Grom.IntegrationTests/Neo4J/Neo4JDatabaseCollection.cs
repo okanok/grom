@@ -32,7 +32,7 @@ public class Neo4JFixture : IDisposable
     }
 }
 
-[CollectionDefinition("neo4j-collection")]
+[CollectionDefinition("neo4j-collection", DisableParallelization = true)]
 public class Neo4JDatabaseCollection : ICollectionFixture<Neo4JFixture>
 {
     // This class has no code, and is never created. Its purpose is simply

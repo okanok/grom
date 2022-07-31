@@ -11,7 +11,7 @@
   <PropertyGroup>
     <PackageId>Grom</PackageId>
     <Authors>oko404</Authors>
-    <PackageTags>orm;dotnet;graph;graph-db;graph-orm</PackageTags>
+    <PackageTags>orm;dotnet;graph;graph-db;graph-orm;neo4j</PackageTags>
     <Description>
       Grom is a graph database object relational mapper.
     </Description>

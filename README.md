@@ -64,7 +64,7 @@ A node can be deleted by calling DeleteNode().
 ```
 await personNode.DeleteNode();
 ```
-The actual object in your code will still exist but the node and all its relationships to other nodes will be deleted in the database. So you could call Persist() again. and keep using this object.
+The actual object in your code will still exist but the node and all its relationships to other nodes will be deleted in the database.
 
 ### Retrieving a node
 
@@ -129,9 +129,9 @@ var person2 = new Person("Doe", 26);
 person1.knownPeople.Add(new Knows(5), person2);
 await person1.Persist();
 ```
-Calling Persist() will, in adition to the node, also persist or update any descendant node and relationship. Updating works the same way as with nodes, change the property and call Persist() again on any ancestor node.
+Calling Persist() will, in adition to the node, also persist or update any descendant nodes and relationships. Updating works the same way as with nodes, change the property and call Persist() again on any ancestor node.
 
-To delete a node you can use the Remove, RemoveAt or RemoveRange methods on RelationshipCollection. They work the same as in a List\<T>. 
+To delete a relationship you can use the Remove, RemoveAt or RemoveRange methods on RelationshipCollection. They work the same as in a List\<T>. 
 
 ## Supported Databases
 
@@ -143,4 +143,4 @@ Comming soon.
 
 ## Contribute & Bugs
 
-Grom is open source so feel free to checkout (pun intended) [the repo](https://github.com/okanok/grom) to see the code, features being worked on and maybe even create a PR yourself! We also have an [issue board](https://github.com/okanok/grom/projects/1) to have a nice overview of the issues we have. Bugs can also be reported in that GitHub project.
+Grom is open source so feel free to checkout (pun intended) [the repo](https://github.com/okanok/grom) to see the code, features being worked on and maybe even create a PR yourself! We also have an [issue board](https://github.com/okanok/grom/projects/1) to have a nice overview of the issues we have and the ones being worked on. Bugs can also be reported in that GitHub project.
