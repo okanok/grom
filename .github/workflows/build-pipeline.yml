@@ -33,7 +33,7 @@ jobs:
     
     - name: Get release version from branch name
       run: |
-        echo github.ref_name
+        echo $GITHUB_REF
 
   publish:
     if: ${{ contains(fromJson('["/release/"]'), github.ref_name) }}
