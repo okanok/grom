@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using Grom.Entities.Attributes;
 using Grom.Entities.Relationships;
 using Grom.GraphDbConnectors;
 using Grom.Util;

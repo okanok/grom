@@ -54,6 +54,6 @@ jobs:
       run: dotnet pack -c release -p:PackageVersion=0.1.0-alpha -o ./ ./src/Grom/Grom.csproj
 
     - name: Publish
-      run: dotnet nuget push Grom.0.1.0-alpha.nupkg --api-key $FEED_APIKEY --source $NUGET_SOURCE
+      run: dotnet nuget push Grom.0.1.0-alpha.nupkg --api-key $NUGET_KEY --source $NUGET_SOURCE
 
 
