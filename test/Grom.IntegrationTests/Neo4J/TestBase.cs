@@ -19,6 +19,6 @@ public class Neo4JTestBase : IDisposable
         session.WriteTransactionAsync(async tx =>
         {
             await tx.RunAsync("MATCH (a) OPTIONAL MATCH (a)-[r]-(b) DELETE r,a,b");
-        }).Wait(); ;
+        }).Wait();
     }
 }

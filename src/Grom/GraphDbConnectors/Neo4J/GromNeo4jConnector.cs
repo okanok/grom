@@ -12,13 +12,13 @@ namespace Grom.GraphDbConnectors.Neo4J;
 /// </summary>
 public class GromNeo4jConnector : GromGraphDbConnector
 {
-    private static readonly string CreateNodeQueryBase = "CREATE (n:{0} {{{1}}}) RETURN id(n) as r;";
-    private static readonly string UpdateNodeQueryBase = "MATCH (n:{0}) WHERE id(n) = {1} SET n = {{{2}}};";
-    private static readonly string DeleteNodeQueryBase = "MATCH (a) WHERE id(a) = {0} DETACH DELETE a;";
-    private static readonly string CreateDirectedRelationshipQueryBase = "MATCH (a), (b) WHERE id(a) = {0} AND id(b) = {1} CREATE (a)-[r:{2} {{{3}}}]->(b) RETURN id(r) as r";
-    private static readonly string UpdateDirectedRelationshipQueryBase = "MATCH (a)-[r:{0}]->(b) WHERE id(r) = {1} SET r = {{{2}}};";
-    private static readonly string DeleteDirectedRelationshipQueryBase = "MATCH (a)-[r]->(b) WHERE id(r) = {0} DELETE r";
-    private static readonly string Query = "MATCH (n) WHERE {0} OPTIONAL MATCH (n)-[r*]->(p) RETURN n, last(r) AS r, p";
+    private static readonly string CreateNodeQueryBase = "CREATE (n:{0} {{{1}, nodeIdentifier: '{2}'}}) RETURN n.nodeIdentifier as r;";
+    private static readonly string UpdateNodeQueryBase = "MATCH (n:{0}) WHERE n.nodeIdentifier = '{1}' SET n = {{{2}, nodeIdentifier: '{1}'}};";
+    private static readonly string DeleteNodeQueryBase = "MATCH (n) WHERE n.nodeIdentifier = '{0}' DETACH DELETE n;";
+    private static readonly string CreateDirectedRelationshipQueryBase = "MATCH (a), (b) WHERE a.nodeIdentifier = '{0}' AND b.nodeIdentifier = '{1}' CREATE (a)-[r:{2} {{{3}, relationshipIdentifier: '{4}'}}]->(b) RETURN r.relationshipIdentifier as r";
+    private static readonly string UpdateDirectedRelationshipQueryBase = "MATCH (a)-[r:{0}]->(b) WHERE r.relationshipIdentifier = '{1}' SET r = {{{2}, relationshipIdentifier: '{1}'}};";
+    private static readonly string DeleteDirectedRelationshipQueryBase = "MATCH (a)-[r]->(b) WHERE r.relationshipIdentifier = '{0}' DELETE r";
+    private static readonly string Query = "MATCH (n) WHERE {0} AND EXISTS(n.nodeIdentifier) OPTIONAL MATCH (n)-[r*]->(p) WHERE (ALL(rel in r WHERE EXISTS(rel.relationshipIdentifier))) AND EXISTS(p.nodeIdentifier) RETURN n, last(r) AS r, p";
 
     private readonly IDriver _driver;
     private readonly GromNeo4jQueryBuilder _gromNeo4JQueryBuilder;
@@ -26,29 +26,32 @@ public class GromNeo4jConnector : GromGraphDbConnector
 
     public GromNeo4jConnector(IDriver driver)
     {
-        _gromNeo4JQueryBuilder = new GromNeo4jQueryBuilder(); //TODO: make static?
-        _gromNeo4JResultMapper = new GromNeo4jResultMapper(); //TODO: make static?
+        _gromNeo4JQueryBuilder = new GromNeo4jQueryBuilder();
+        _gromNeo4JResultMapper = new GromNeo4jResultMapper();
         _driver = driver;
     }
 
-    internal override async Task<long> CreateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel)
+    internal override async Task<Guid> CreateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel)
     {
-        var props = string.Join(", ", properties.Select(x => x.Name + ": " + Utils.TypeStringify(x.GetValue(node))));
-        var query = string.Format(CreateNodeQueryBase, nodeLabel, props);
+        var nodeIdentifier = Guid.NewGuid();
+        var props = string.Join(", ", properties.Select(p => p.Name + ": " + Utils.TypeStringify(p.GetValue(node))));
+        var query = string.Format(CreateNodeQueryBase, nodeLabel, props, nodeIdentifier);
 
 
         var session = _driver.AsyncSession();
         try
         {
             var cursor = await session.RunAsync(query);
-            return await cursor.SingleAsync(r => r["r"].As<long>());
+            var guidString = await cursor.SingleAsync(r => r["r"].As<string>());
+
+            return Utils.StringToGuid(guidString);
         } finally
         {
             await session.CloseAsync();
         }
     }
 
-    internal override async Task DeleteNode(long nodeId)
+    internal override async Task DeleteNode(Guid nodeId)
     {
         var query = string.Format(DeleteNodeQueryBase, nodeId);
 
@@ -63,7 +66,7 @@ public class GromNeo4jConnector : GromGraphDbConnector
         }
     }
 
-    internal override async Task UpdateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel, long nodeId)
+    internal override async Task UpdateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel, Guid nodeId)
     {
         // TODO: optimize retrieving properties and values
         var props = string.Join(", ", properties.ToList().Select(x => x.Name + ": " + Utils.TypeStringify(x.GetValue(node))));
@@ -80,16 +83,19 @@ public class GromNeo4jConnector : GromGraphDbConnector
         }
     }
 
-    internal override async Task<long> CreateDirectedRelationship(RelationshipBase relationship, IEnumerable<PropertyInfo> properties, long childNodeId, long parentNodeId)
+    internal override async Task<Guid> CreateDirectedRelationship(RelationshipBase relationship, IEnumerable<PropertyInfo> properties, Guid childNodeId, Guid parentNodeId)
     {
+        var relationshipIdentifier = Guid.NewGuid();
         var props = string.Join(", ", properties.ToList().Select(x => x.Name + ": " + Utils.TypeStringify(x.GetValue(relationship))));
-        var query = string.Format(CreateDirectedRelationshipQueryBase, parentNodeId, childNodeId, relationship.GetType().Name, props);
+        var query = string.Format(CreateDirectedRelationshipQueryBase, parentNodeId, childNodeId, relationship.GetType().Name, props, relationshipIdentifier);
 
         var session = _driver.AsyncSession();
         try
         {
             var cursor = await session.RunAsync(query);
-            return await cursor.SingleAsync(r => r["r"].As<long>());
+            var guidString = await cursor.SingleAsync(r => r["r"].As<string>());
+
+            return Utils.StringToGuid(guidString);
         }
         finally
         {
@@ -113,7 +119,7 @@ public class GromNeo4jConnector : GromGraphDbConnector
         }
     }
 
-    internal override async Task DeleteRelationship(long relationshipId)
+    internal override async Task DeleteRelationship(Guid relationshipId)
     {
         var query = string.Format(DeleteDirectedRelationshipQueryBase, relationshipId);
 
@@ -144,13 +150,9 @@ public class GromNeo4jConnector : GromGraphDbConnector
                 var result = await cursor.ToListAsync();
                 return _gromNeo4JResultMapper.Map<T>(result); // Can be null if result is not found
             }
-            catch (InvalidOperationException ex) //TODO: do this better
+            catch (InvalidOperationException ex) when (ex.Message.Contains("Sequence contains no elements"))
             {
-                if (ex.Message.Equals("Sequence contains no elements"))
-                {
-                    return null;
-                }
-                throw ex;
+                return null;
             }
         }
         finally
@@ -174,13 +176,9 @@ public class GromNeo4jConnector : GromGraphDbConnector
                 var result = (await cursor.ToListAsync());
                 return _gromNeo4JResultMapper.MapMultiple<T>(result);
             }
-            catch (InvalidOperationException ex) //TODO: do this better
+            catch (InvalidOperationException ex) when (ex.Message.Contains("Sequence contains no elements"))
             {
-                if (ex.Message.Contains("Sequence contains no elements"))
-                {
-                    return new List<T>();
-                }
-                throw ex;
+                return new List<T>();
             }
         }
         finally

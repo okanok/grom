@@ -5,35 +5,24 @@ using Grom.Util;
 using Grom.Util.Exceptions;
 using Neo4j.Driver;
 
-
 namespace Grom.Entities;
 
 public abstract class EntityNode
 {
-    private readonly GromGraphDbConnector _dbConnector;
-    private readonly Type cachedTypeObject; //TODO: rename
-    private readonly IEnumerable<PropertyInfo> cachedProperties;
+    private readonly Type cachedEntityType;
+    private readonly IEnumerable<PropertyInfo> cachedEntityProperties;
 
     /// <summary>
-    /// EntityId is the entity id assigned by the graph database itself to the node and should always be unique.
-    /// This property is for internal use to know if the node has been created in the database.
+    /// EntityId is the entity id assigned by Grom itself to the node and should always be unique.
+    /// This property is for internal use to identify entities in the database and link them to objects in code.
+    /// If the Guid is null then the object has not been created yet in the database.
     /// </summary>
-    internal long? EntityNodeId;
+    internal Guid? EntityNodeId;
 
     public EntityNode()
     {
-        _dbConnector = GromGraph.GetDbConnector();
-        cachedTypeObject = GetType();
-        cachedProperties = Utils.GetEntityProperties(cachedTypeObject);
-        foreach (var property in cachedProperties)
-        {
-            // TODO: make sure types are not nullable or support nullable properties
-            if (!_dbConnector.GetSupportedTypes().Contains(property.PropertyType))
-            {
-                throw new NodePropertyTypeNotSupportedException(property.PropertyType.Name, property.Name, GetType().Name);
-            }
-
-        }
+        cachedEntityType = GetType();
+        cachedEntityProperties = Utils.GetEntityProperties(cachedEntityType);
     }
 
     /// <summary>
@@ -45,11 +34,11 @@ public abstract class EntityNode
     {
         if (!EntityNodeId.HasValue)
         {
-            EntityNodeId = await _dbConnector.CreateNode(this, cachedProperties, cachedTypeObject.Name);
+            EntityNodeId = await GromGraph.GetDbConnector().CreateNode(this, cachedEntityProperties, cachedEntityType.Name);
         }
         else
         {
-            await _dbConnector.UpdateNode(this, cachedProperties, cachedTypeObject.Name, EntityNodeId.Value);
+            await GromGraph.GetDbConnector().UpdateNode(this, cachedEntityProperties, cachedEntityType.Name, EntityNodeId.Value);
         }
 
         // Persist relationships
@@ -71,7 +60,7 @@ public abstract class EntityNode
             // Cant delete if entity does not exist
             return;
         }
-        await _dbConnector.DeleteNode(EntityNodeId.Value);
+        await GromGraph.GetDbConnector().DeleteNode(EntityNodeId.Value);
         EntityNodeId = null; // To make sure code keeps working correctly
 
     }
@@ -79,7 +68,7 @@ public abstract class EntityNode
     // TODO: check for optimisation
     private IEnumerable<IRelationshipCollection> GetRelationshipFields()
     {
-        return cachedTypeObject
+        return cachedEntityType
             .GetProperties(BindingFlags.Instance | BindingFlags.Public)
             .Where(x => typeof(IRelationshipCollection).IsAssignableFrom(x.PropertyType))
             .Select(x => x.GetValue(this).As<IRelationshipCollection>());

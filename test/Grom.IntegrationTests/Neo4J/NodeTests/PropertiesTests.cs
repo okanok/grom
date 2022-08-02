@@ -86,21 +86,31 @@ public class PropertiesTests: Neo4JTestBase
     }
 
     [Fact]
-    public void CreatingNodeWithUnsupportedTypeShouldThrowError()
+    public async Task CreatingNodeWithUnsupportedTypeShouldThrowError()
     {
-        Assert.Throws<NodePropertyTypeNotSupportedException>(() => new NodeWithDateTime
+        await Assert.ThrowsAsync<PropertyTypeNotSupportedException>(async () =>
         {
-            DateProperty = new DateTime()
-        });
+            var node = new NodeWithDateTime
+            {
+                DateProperty = new DateTime()
+            };
+
+            await node.Persist();
+    });
     }
 
     [Fact]
-    public void CreatingNodeWithUnsupportedListTypeShouldThrowError()
+    public async Task CreatingNodeWithUnsupportedListTypeShouldThrowError()
     {
-        Assert.Throws<NodePropertyTypeNotSupportedException>(() => new NodeWithList
+        await Assert.ThrowsAsync<PropertyTypeNotSupportedException>(async () =>
+        {
+        var node = new NodeWithList
         {
             IntArray = new int[] { 1, 2 }
-        });
+        };
+
+        await node.Persist();
+    });
     }
 }
 

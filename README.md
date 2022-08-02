@@ -143,4 +143,4 @@ Comming soon.
 
 ## Contribute & Bugs
 
-Grom is open source so feel free to checkout (pun intended) [the repo](https://github.com/okanok/grom) to see the code, features being worked on and maybe even create a PR yourself! We also have an [issue board](https://github.com/okanok/grom/projects/1) to have a nice overview of the issues we have and the ones being worked on. Bugs can also be reported in that GitHub project.
+Grom is open source so feel free to checkout (pun intended) [the repo](https://github.com/okanok/grom) to see the code, features being worked on and maybe even to create a PR yourself! We also have an [issue board](https://github.com/okanok/grom/projects/1) to have a nice overview of the issues we have and the ones being worked on. Bugs can be reported on the discussions page [here](https://github.com/okanok/grom/discussions).

@@ -16,14 +16,14 @@ public abstract class GromGraphDbConnector
     /// <param name="properties">the properties of the entity</param>
     /// <param name="nodeLabel">the name of the label that should be given to the node</param>
     /// <returns>the unique entity id assigned by the database to the node</returns>
-    internal abstract Task<long> CreateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel);
+    internal abstract Task<Guid> CreateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel);
 
     /// <summary>
     /// Deletes the node in the database including all relationships this node has.
     /// Note that the object itself will keep exisiting.
     /// </summary>
-    /// <param name="nodeId"> The unique identifier assigned by the database to the node</param>
-    internal abstract Task DeleteNode(long nodeId);
+    /// <param name="nodeId"> The unique identifier assigned by Grom to the node</param>
+    internal abstract Task DeleteNode(Guid nodeId);
 
     /// <summary>
     /// Updates the given node with the properties
@@ -31,9 +31,9 @@ public abstract class GromGraphDbConnector
     /// <param name="node">the node that will be updated</param>
     /// <param name="properties">the properties of the node</param>
     /// <param name="nodeLabel">the label of the node</param>
-    /// <param name="nodeId">the unique entity id of the node given by the database</param>
+    /// <param name="nodeId">the unique entity id of the node assigned by Grom</param>
     /// <returns></returns>
-    internal abstract Task UpdateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel, long nodeId);
+    internal abstract Task UpdateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel, Guid nodeId);
 
     /// <summary>
     /// Creates the given directed relationship entity in the database
@@ -43,7 +43,7 @@ public abstract class GromGraphDbConnector
     /// <param name="childNodeId">the unique id of the parent of the relationship, child should already exist in the database</param>
     /// <param name="parentNodeId">the unique id of the child of the relationship, parent should already exist in the database</param>
     /// <returns>the unique eneity id assigned to the relationship by the database</returns>
-    internal abstract Task<long> CreateDirectedRelationship(RelationshipBase relationship, IEnumerable<PropertyInfo> properties, long childNodeId, long parentNodeId);
+    internal abstract Task<Guid> CreateDirectedRelationship(RelationshipBase relationship, IEnumerable<PropertyInfo> properties, Guid childNodeId, Guid parentNodeId);
 
     /// <summary>
     /// Updates the relationship in the databse to be the same as given relationship entity 
@@ -58,7 +58,7 @@ public abstract class GromGraphDbConnector
     /// </summary>
     /// <param name="relationshipId">the unique relationship id used to identify the relationship</param>
     /// <returns></returns>
-    internal abstract Task DeleteRelationship(long relationshipId);
+    internal abstract Task DeleteRelationship(Guid relationshipId);
 
     /// <summary>
     /// Returns a list of the types supported by Grom
