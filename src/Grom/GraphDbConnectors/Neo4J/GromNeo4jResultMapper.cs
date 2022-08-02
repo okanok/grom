@@ -34,7 +34,7 @@ internal class GromNeo4jResultMapper
                     nodes.Add(node.Id, mappedNode); 
                 }
             }
-            if (record[parentKey] is not null)
+            if (record.Keys.Contains(parentKey) && record[parentKey] is not null)
             {
                 var node = (INode)record[parentKey];
                 if (!nodes.ContainsKey(node.Id))
@@ -48,7 +48,7 @@ internal class GromNeo4jResultMapper
         // Add relationships between nodes in result
         foreach (var record in records)
         {
-            if (record[relationshipKey] is not null)
+            if (record.Keys.Contains(relationshipKey) && record[relationshipKey] is not null)
             {
                 var relationship = (IRelationship)record[relationshipKey];
                 var relationshipType = relationshipsStructure.FirstOrDefault(t => t.Item2.Name.Equals(relationship.Type)).Item2;

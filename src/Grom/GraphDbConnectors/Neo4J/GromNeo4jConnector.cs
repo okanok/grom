@@ -18,7 +18,8 @@ public class GromNeo4jConnector : GromGraphDbConnector
     private static readonly string CreateDirectedRelationshipQueryBase = "MATCH (a), (b) WHERE a.nodeIdentifier = '{0}' AND b.nodeIdentifier = '{1}' CREATE (a)-[r:{2} {{{3}, relationshipIdentifier: '{4}'}}]->(b) RETURN r.relationshipIdentifier as r";
     private static readonly string UpdateDirectedRelationshipQueryBase = "MATCH (a)-[r:{0}]->(b) WHERE r.relationshipIdentifier = '{1}' SET r = {{{2}, relationshipIdentifier: '{1}'}};";
     private static readonly string DeleteDirectedRelationshipQueryBase = "MATCH (a)-[r]->(b) WHERE r.relationshipIdentifier = '{0}' DELETE r";
-    private static readonly string Query = "MATCH (n) WHERE {0} AND EXISTS(n.nodeIdentifier) OPTIONAL MATCH (n)-[r*]->(p) WHERE (ALL(rel in r WHERE EXISTS(rel.relationshipIdentifier))) AND EXISTS(p.nodeIdentifier) RETURN n, last(r) AS r, p";
+    private static readonly string QueryOnlyNode = "MATCH (n) WHERE {0} AND EXISTS(n.nodeIdentifier) RETURN n";
+    private static readonly string QueryWithRelationships = "MATCH (n) WHERE {0} AND EXISTS(n.nodeIdentifier) OPTIONAL MATCH (n)-[r*]->(p) WHERE (ALL(rel in r WHERE EXISTS(rel.relationshipIdentifier))) AND EXISTS(p.nodeIdentifier) RETURN n, last(r) AS r, p";
 
     private readonly IDriver _driver;
     private readonly GromNeo4jQueryBuilder _gromNeo4JQueryBuilder;
@@ -134,10 +135,12 @@ public class GromNeo4jConnector : GromGraphDbConnector
         }
     }
 
-    internal override async Task<T> GetSingleNode<T>(IConstraintNode state)
+    internal override async Task<T> GetSingleNode<T>(QueryState state)
     {
-        var constraints = _gromNeo4JQueryBuilder.BuildQuery(state);
-        var query = string.Format(Query, constraints);
+        var constraints = _gromNeo4JQueryBuilder.BuildQuery(state.Query);
+        var query = state.RetrieveRelationships 
+            ? string.Format(QueryWithRelationships, constraints) 
+            : string.Format(QueryOnlyNode, constraints);
 
 
         var session = _driver.AsyncSession();
@@ -161,10 +164,12 @@ public class GromNeo4jConnector : GromGraphDbConnector
         }
     }
 
-    internal override async Task<IEnumerable<T>> GetNodes<T>(IConstraintNode state)
+    internal override async Task<IEnumerable<T>> GetNodes<T>(QueryState state)
     {
-        var constraints = _gromNeo4JQueryBuilder.BuildQuery(state);
-        var query = string.Format(Query, constraints);
+        var constraints = _gromNeo4JQueryBuilder.BuildQuery(state.Query);
+        var query = state.RetrieveRelationships
+            ? string.Format(QueryWithRelationships, constraints)
+            : string.Format(QueryOnlyNode, constraints);
 
         var session = _driver.AsyncSession();
         try
