@@ -20,7 +20,6 @@ public class GromGraph
     /// <returns></returns>
     public static void CreateConnection(IDriver driver)
     {
-        //TODO: check if we should warn user if he is overwriting an existing connection?
         _dbConnector = new GromNeo4jConnector(driver);
     }
 

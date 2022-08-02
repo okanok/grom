@@ -2,6 +2,8 @@
 using System.Reflection;
 using Grom.Entities;
 using Grom.Entities.Attributes;
+using Grom.Entities.Relationships;
+using Grom.Util.Exceptions;
 
 namespace Grom.Util;
 
@@ -14,14 +16,17 @@ internal class Utils
     /// </summary>
     /// <param name="o">the propertie that will be stringified</param>
     /// <returns>the object in a formatted string form</returns>
-    internal static string TypeStringify(object o)
+    internal static string TypeStringify(object? o)
     {
         return o switch
         {
+            null    => "null", //TODO: handle null correctly
+            int     => o.ToString() ?? string.Empty,
             string  => string.Format("'{0}'", o),
             bool    => (bool)o ? "1" : "0",
             float   => ((float)o).ToString(CultureInfo.InvariantCulture),
-            _       => o?.ToString() ?? String.Empty,
+            long    => ((long)o).ToString(CultureInfo.InvariantCulture),
+            _       => throw new PropertyTypeNotSupportedException(o.GetType().Name)
         };
     }
 
@@ -33,7 +38,10 @@ internal class Utils
     /// <returns></returns>
     internal static object Typify(Type expectedType, object o)
     {
-        if (expectedType == typeof(int))
+        if(o is null)
+        {
+            return null; //TODO: handle null correctly
+        } else if (expectedType == typeof(int))
         {
             return Convert.ToInt32(o);
         } else if (expectedType == typeof(bool))
@@ -42,25 +50,31 @@ internal class Utils
         } else if (expectedType == typeof(float))
         {
             return Convert.ToSingle(o);
+        } else if (expectedType == typeof(long))
+        {
+            return Convert.ToInt64(o);
+        } else if (expectedType == typeof(string))
+        {
+            return Convert.ToString(o);
         }
-        return o;
+        throw new PropertyTypeNotSupportedException(o.GetType().Name);
     }
 
     /// <summary>
     /// Gets the list of properties from an entity class that are tagged with NodeProperty
     /// </summary>
-    /// <param name="t">the Type class of the entity class</param>
+    /// <param name="nodeClass">the Type class of the entity class</param>
     /// <returns>list of PropertyInfo objects for each property</returns>
-    internal static IEnumerable<PropertyInfo> GetEntityProperties(Type t)
+    internal static IEnumerable<PropertyInfo> GetEntityProperties(Type nodeClass)
     {
-        PropertyInfo[] properties = t.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        PropertyInfo[] properties = nodeClass.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
         return properties.Where(p => p.CustomAttributes.Any(a => a.AttributeType == typeof(NodeProperty)));
     }
 
-    internal static IEnumerable<PropertyInfo> GetRelationshipProperties(Type t)
+    internal static IEnumerable<PropertyInfo> GetRelationshipProperties(Type relationshipClass)
     {
-        PropertyInfo[] properties = t.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        PropertyInfo[] properties = relationshipClass.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
         return properties.Where(p => p.CustomAttributes.Any(a => a.AttributeType == typeof(RelationshipProperty)));
     }
@@ -86,6 +100,21 @@ internal class Utils
         return relationships;
     }
 
+    internal static void AddRelationshipToNode(EntityNode parent, RelationshipBase relationship, EntityNode child)
+    {
+        var relationshipProperty = GetNodeRelationshipProperty(parent, relationship.GetType(), child.GetType());
+        if (relationshipProperty is null)
+        {
+            throw new InvalidOperationException($"Cannot find relationship collection in class {nameof(parent)} with relationhship type {nameof(relationship)} and child {nameof(child)}");
+        }
+        var relationshipCollection = relationshipProperty.GetValue(parent, null) as IRelationshipCollection;
+        if (relationshipCollection is null)
+        {
+            throw new InvalidOperationException($"Could not retrieve reference to collection {relationshipProperty.Name} from class {nameof(parent)}");
+        }
+        relationshipCollection.Add(relationship, child);
+    }
+
     internal static PropertyInfo? GetNodeRelationshipProperty(EntityNode node, Type relationshipType, Type childType)
     {
         return node.GetType()
@@ -94,5 +123,19 @@ internal class Utils
                 p.PropertyType.Name == "RelationshipCollection`2" 
                 && p.PropertyType.GenericTypeArguments.All(ta => ta.Equals(relationshipType) || ta.Equals(childType))
             );
+    }
+
+    internal static Guid StringToGuid(string? guidString)
+    {
+        var parsed = Guid.TryParse(guidString, out Guid parsedGuid);
+
+        if (parsed)
+        {
+            return parsedGuid;
+        }
+        else
+        {
+            throw new FormatException($"Failed to parse Guid! value was {guidString}");
+        }
     }
 }

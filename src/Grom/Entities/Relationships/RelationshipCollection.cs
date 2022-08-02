@@ -13,7 +13,7 @@ public class RelationshipCollection<T1, T2> : List<RelationshipItem<T1, T2>>, IR
     /// </summary>
     /// <param name="parentId"></param>
     /// <returns></returns>
-    async Task IRelationshipCollection.Persist(long parentId)
+    async Task IRelationshipCollection.Persist(Guid parentId)
     {
         foreach (var relationshipItem in this)
         {

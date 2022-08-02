@@ -58,7 +58,7 @@ internal class GromNeo4jQueryBuilder
                 strBuilder.Append(" OR ");
                 break;
             default:
-                throw new InvalidOperationException($"Operator {constr.infixOperator} not supported by connector!"); //TODO: also name the connector
+                throw new InvalidOperationException($"Operator {constr.infixOperator} not supported by Neo4J connector!");
         }
 
         ParseQueryNode((dynamic)constr.right, strBuilder);
@@ -74,7 +74,7 @@ internal class GromNeo4jQueryBuilder
                 strBuilder.Append("(NOT ");
                 break;
             default:
-                throw new InvalidOperationException($"Operator {constr.prefixOperator} not supported by connector!"); //TODO: also name the connector
+                throw new InvalidOperationException($"Operator {constr.prefixOperator} not supported by Neo4J connector!");
         }
 
         ParseQueryNode((dynamic)constr.constraint, strBuilder);
