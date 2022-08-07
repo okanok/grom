@@ -12,12 +12,13 @@ public class RelationshipCollection<T1, T2> : List<RelationshipItem<T1, T2>>, IR
     /// Persists all relationships, if the relationship exists the relationship will be updated
     /// </summary>
     /// <param name="parentId"></param>
+    /// <param name="Degree"></param>
     /// <returns></returns>
-    async Task IRelationshipCollection.Persist(Guid parentId)
+    async Task IRelationshipCollection.Persist(Guid parentId, int? Degree = null)
     {
         foreach (var relationshipItem in this)
         {
-            await relationshipItem.Node.Persist();
+            await relationshipItem.Node.Persist(Degree);
             await relationshipItem.Relationship.Persist(relationshipItem.Node.EntityNodeId!.Value, parentId);
         }
     }

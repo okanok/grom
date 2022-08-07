@@ -14,3 +14,16 @@ public class PersonWithRelationship: Person
 
     public RelationshipCollection<KnowsRelationship, PersonWithRelationship> KnownPeople { get; set; } = new();
 }
+
+public class PersonWithCustomRelationship : Person
+{
+    public PersonWithCustomRelationship()
+    {
+    }
+
+    public PersonWithCustomRelationship(string name, int age) : base(name, age)
+    {
+    }
+
+    public RelationshipCollection<KnowsCustomNameRelationship, PersonWithCustomRelationship> KnownPeople { get; set; } = new();
+}

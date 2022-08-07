@@ -8,7 +8,9 @@ Since this project is open source and currently only worked on by the maintainer
 
 Feel free to try it out and if some feature is missing don't hesitate to open an issue!  
 
-## Getting started
+# Quick start
+
+## Connecting Grom to your database
 
 Configuring Grom is easy, it only requires a database connection to be given to GromGraph.CreateConnection(...). You don't need to instantiate this class or call it anywhere after running CreateConnection once.
 
@@ -19,9 +21,7 @@ GromGraph.CreateConnection(GraphDatabase.Driver("bolt://localhost:7687", AuthTok
 ```
 Any valid instance of Neo4J IDriver can be passed, so you are not restricted to username/password authentication.
 
-## Features
-
-### Mapping a class
+## Mapping a class
 To map a class as a node you have to do two things: inherit from EntityNode and annotate each property you want to map with NodeProperty. Grom does also require an empty constructor for all nodes.
 
 A mapped class can be as simple as:
@@ -35,9 +35,9 @@ public class Person : EntityNode
     public int Age { get; set; }
 }
 ```
-Currently integers, booleans, strings, floats and longs are supported. Version 1.0 will also support Dates and DateTimes.
+Currently integer, boolean, string, float, long, DateTime and DateOnly are supported.
 
-### Persisting a node
+## Persisting a node
 
 To persist a node simply call Persist() on any of your objects that inherit from EntityNode.
 ```
@@ -46,7 +46,7 @@ await personNode.Persist();
 ```
 Grom is fully asynchronous so make sure you await when required. 
 
-### Updating a node
+## Updating a node
 
 Updating a node is also done by calling Persist(). Grom will figure out if the node is allready created or not. 
 ```
@@ -58,7 +58,7 @@ await personNode.Persist();
 ```
 Do note that Grom only knows that a node exists if you have called Persist() on it or have retrieved it with Retrieve. It wont check if a node exists with the same properties in the database! 
 
-### Deleting a node
+## Deleting a node
 
 A node can be deleted by calling DeleteNode().
 ```
@@ -66,7 +66,7 @@ await personNode.DeleteNode();
 ```
 The actual object in your code will still exist but the node and all its relationships to other nodes will be deleted in the database.
 
-### Retrieving a node
+## Retrieving a node
 
 Nodes can be retrieved using Retrieve\<T>. Nodes can be filtered by simply giving a lambda function that has a single parameter (the root node) and returns a boolean. Grom turns the lambda function into a query for you.
 ```
@@ -76,7 +76,7 @@ var personNode = await Retrieve<Person>
 ```    
 Boolean operators such as &&, ||, !, ==, !=, >, <, >= and <= are supported. Properties can be compared to constants, variables, method calls with no parameters and properties or fields in objects. Do note however that Grom can't turn everything a lambda can do into a query. Try to keep the lambda simple.
 
-### Relationships
+## Relationships
 
 For now only directed relationships are supported. Release 1.0 will also include support for undirected relationships.
 
@@ -136,6 +136,8 @@ To delete a relationship you can use the Remove, RemoveAt or RemoveRange methods
 ## Supported Databases
 
 Currently only Neo4J is supported. With the release of version 1.0 Azure Cosmos DB will also be supported.
+
+# More info
 
 ## Docs
 

@@ -16,18 +16,45 @@ internal class Utils
     /// </summary>
     /// <param name="o">the propertie that will be stringified</param>
     /// <returns>the object in a formatted string form</returns>
-    internal static string TypeStringify(object? o)
+    internal static string StringifyType(object? o)
     {
         return o switch
         {
-            null    => "null", //TODO: handle null correctly
-            int     => o.ToString() ?? string.Empty,
-            string  => string.Format("'{0}'", o),
-            bool    => (bool)o ? "1" : "0",
-            float   => ((float)o).ToString(CultureInfo.InvariantCulture),
-            long    => ((long)o).ToString(CultureInfo.InvariantCulture),
-            _       => throw new PropertyTypeNotSupportedException(o.GetType().Name)
+            null        => "null",
+            int         => o.ToString() ?? string.Empty,
+            string      => string.Format("'{0}'", o),
+            bool        => (bool)o ? "1" : "0",
+            float       => ((float)o).ToString(CultureInfo.InvariantCulture),
+            long        => ((long)o).ToString(CultureInfo.InvariantCulture),
+            DateTime    => string.Format("datetime('{0}')", ((DateTime)o).ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss.fffffffK")),
+            DateOnly    => string.Format("date('{0}')", ((DateOnly)o).ToString("yyyy'-'MM'-'dd")),
+            _           => throw new PropertyTypeNotSupportedException(o.GetType().Name)
         };
+    }
+
+    /// <summary>
+    /// Will create a string representation of a property with the name and value seperated by the given delimiter
+    /// If NullabilityCheckOn() is called then will throw exception when value is null but property is not nullable
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    internal static string StringifyProperty(char delimiter, PropertyInfo property, EntityNode node)
+    {
+        var value = StringifyType(property.GetValue(node));
+        var name = GetNodePropertyName(property);
+        return string.Format("{0}{1} {2}", name, delimiter, value);
+    }
+
+    /// <summary>
+    /// Overload for relationships
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    internal static string StringifyProperty(char delimiter, PropertyInfo property, RelationshipBase relationship)
+    {
+        var value = StringifyType(property.GetValue(relationship));
+        var name = GetRelationshipPropertyName(property);
+        return string.Format("{0}{1} {2}", name, delimiter, value);
     }
 
     /// <summary>
@@ -56,6 +83,12 @@ internal class Utils
         } else if (expectedType == typeof(string))
         {
             return Convert.ToString(o);
+        } else if (expectedType == typeof(DateTime))
+        {
+            return Convert.ToDateTime(o.ToString());
+        } else if (expectedType == typeof(DateOnly))
+        {
+            return DateOnly.Parse(o.ToString());
         }
         throw new PropertyTypeNotSupportedException(o.GetType().Name);
     }
@@ -77,6 +110,43 @@ internal class Utils
         PropertyInfo[] properties = relationshipClass.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
         return properties.Where(p => p.CustomAttributes.Any(a => a.AttributeType == typeof(RelationshipProperty)));
+    }
+
+    /// <summary>
+    /// Retrieves what the name of the property should be in the database
+    /// </summary>
+    /// <param name="property"></param>
+    /// <returns></returns>
+    internal static string GetNodePropertyName(PropertyInfo property)
+    {
+        var attributePropertyName = property.GetCustomAttributes<NodeProperty>().First().dbPropertyName;
+        return attributePropertyName is not null ? attributePropertyName : property.Name;
+    }
+
+    /// <summary>
+    /// Retrieves what the name of the property should be in the database
+    /// </summary>
+    /// <param name="property"></param>
+    /// <returns></returns>
+    internal static string GetRelationshipPropertyName(PropertyInfo property)
+    {
+        var attributePropertyName = property.GetCustomAttributes<RelationshipProperty>().First().dbPropertyName;
+        return attributePropertyName is not null ? attributePropertyName : property.Name;
+    }
+
+    /// <summary>
+    /// Retrieves the name of the property from a query Expression to compare in the database
+    /// </summary>
+    /// <param name="property"></param>
+    /// <returns></returns>
+    internal static string GetMemberPropertyName(MemberInfo member)
+    {
+        var prop = member.GetCustomAttribute<NodeProperty>();
+        if (prop is null)
+        {
+            throw new InvalidOperationException($"Property {member.Name} not marked with NodeProperty attribute used in query!");
+        }
+        return prop.dbPropertyName is not null ? prop.dbPropertyName : member.Name;
     }
 
     internal static IEnumerable<(Type, Type, Type)> getAllRelatedTypesFromType(Type root, List<Type> discoveredTypes)

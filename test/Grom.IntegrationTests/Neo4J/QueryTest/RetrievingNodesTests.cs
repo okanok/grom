@@ -17,7 +17,9 @@ public class RetrievingNodesTests: IClassFixture<Neo4JTestBase>
             IntProp = 55,
             BoolProp = true,
             FloatProp = 42.0F,
-            LongProp = 12345678901235L
+            LongProp = 12345678901235L,
+            DateTimeProp = DateTime.Now,
+            DateOnlyProp = DateOnly.FromDateTime(DateTime.Now)
         };
         personNode1.Persist().Wait();
         personNode2.Persist().Wait();
@@ -34,21 +36,6 @@ public class RetrievingNodesTests: IClassFixture<Neo4JTestBase>
         Assert.NotNull(node);
         Assert.Equal("Drogo", node!.Name);
         Assert.Equal(30, node.Age);
-    }
-
-    [Fact]
-    public async Task RetrievePropertiesTest()
-    {
-        var node = await Retrieve<SupportedPropertiesNode>
-            .Where(n => n.StringProp == "Some String")
-            .GetSingle();
-
-        Assert.NotNull(node);
-        Assert.Equal("Some String", node!.StringProp);
-        Assert.Equal(55, node.IntProp);
-        Assert.True(node.BoolProp);
-        Assert.Equal(42.0F, node.FloatProp);
-        Assert.Equal(12345678901235L, node.LongProp);
     }
 
     [Fact]
@@ -72,5 +59,90 @@ public class RetrievingNodesTests: IClassFixture<Neo4JTestBase>
         Assert.True(node.Count() == 2);
         Assert.NotNull(node.SingleOrDefault(n => n.Name == "Drogo"));
         Assert.NotNull(node.SingleOrDefault(n => n.Name == "Khaleesi"));
+    }
+
+    [Fact]
+    public async Task RetrieveOnlyNodePersonWithRelationshipsShouldRetrieveOnlyNodeTest()
+    {
+        var person1 = new PersonWithRelationship("Jaime", 40);
+        var person2 = new PersonWithRelationship("Tyrion", 30);
+        person1.KnownPeople.Add(new KnowsRelationship(30), person2);
+
+        await person1.Persist();
+
+        var retrievedPerson = await Retrieve<PersonWithRelationship>
+            .Where(p => p.Name == "Jaime")
+            .IgnoreRelatedNodes()
+            .GetSingle();
+
+        Assert.NotNull(retrievedPerson);
+        Assert.Equal("Jaime", retrievedPerson!.Name);
+        Assert.Equal(40, retrievedPerson.Age);
+        Assert.True(retrievedPerson.KnownPeople.Count() == 0);
+    }
+
+    [Fact]
+    public async Task RetrieveOnlyNodePersonWithRelationshipsShouldWorkWhenPersonHasNoRelationshipsNodeTest()
+    {
+        var person1 = new PersonWithRelationship("Jaime", 40);
+
+        await person1.Persist();
+
+        var retrievedPerson = await Retrieve<PersonWithRelationship>
+            .Where(p => p.Name == "Jaime")
+            .GetSingle();
+
+        Assert.NotNull(retrievedPerson);
+        Assert.Equal("Jaime", retrievedPerson!.Name);
+        Assert.Equal(40, retrievedPerson.Age);
+        Assert.True(retrievedPerson.KnownPeople.Count() == 0);
+    }
+
+    [Fact]
+    public async Task RetrieveNodeByDateTimeLessThanComparison()
+    {
+        var node = await Retrieve<SupportedPropertiesNode>
+         .Where(n => n.DateTimeProp < DateTime.Now.AddDays(1))
+         .GetSingle();
+
+        Assert.NotNull(node);
+        Assert.Equal("Some String", node.StringProp);
+        Assert.True(node.DateTimeProp < DateTime.Now.AddDays(1));
+    }
+
+    [Fact]
+    public async Task RetrieveNodeByDateTimeGreaterThanComparison()
+    {
+        var node = await Retrieve<SupportedPropertiesNode>
+         .Where(n => n.DateTimeProp > DateTime.Now.AddDays(-1))
+         .GetSingle();
+
+        Assert.NotNull(node);
+        Assert.Equal("Some String", node.StringProp);
+        Assert.True(node.DateTimeProp > DateTime.Now.AddDays(-1));
+    }
+
+    [Fact]
+    public async Task RetrieveNodeByDateOnlyLessThanComparison()
+    {
+        var node = await Retrieve<SupportedPropertiesNode>
+         .Where(n => n.DateTimeProp < DateTime.Now.AddDays(1))
+         .GetSingle();
+
+        Assert.NotNull(node);
+        Assert.Equal("Some String", node.StringProp);
+        Assert.True(node.DateOnlyProp < DateOnly.FromDateTime(DateTime.Now.AddDays(1)));
+    }
+
+    [Fact]
+    public async Task RetrieveNodeByDateOnlyGreaterThanComparison()
+    {
+        var node = await Retrieve<SupportedPropertiesNode>
+         .Where(n => n.DateTimeProp > DateTime.Now.AddDays(-1))
+         .GetSingle();
+
+        Assert.NotNull(node);
+        Assert.Equal("Some String", node.StringProp);
+        Assert.True(node.DateOnlyProp > DateOnly.FromDateTime(DateTime.Now.AddDays(-1)));
     }
 }

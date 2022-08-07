@@ -17,10 +17,10 @@ public class Query<T> : DbRetriever<T> where T : EntityNode
     /// </summary>
     /// <param name="constr">the constraints in the Grom DSL format</param>
     /// <returns></returns>
-    public static DbRetriever<T> Where(IConstraintNode constr)
-    {
-        return new DbRetriever<T>(new QueryState(constr));
-    }
+    //public static DbRetriever<T> Where(IConstraintNode constr)
+    //{
+    //    return new DbRetriever<T>(new QueryState(constr));
+    //}
 
     /// <summary>
     /// Filter nodes based on given lambda expression
@@ -32,7 +32,8 @@ public class Query<T> : DbRetriever<T> where T : EntityNode
     {
         var expressoinMapper = new ExpressionToGromDSLMapper<T>(expr);
         var mappedExpression = expressoinMapper.Map();
-        return new DbRetriever<T>(new QueryState(mappedExpression));
+        var NodeName = expressoinMapper.GetRootNodeName();
+        return new DbRetriever<T>(new QueryState(mappedExpression, NodeName));
     }
 }
 

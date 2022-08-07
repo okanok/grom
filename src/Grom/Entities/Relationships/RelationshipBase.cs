@@ -24,6 +24,19 @@ public abstract class RelationshipBase
         _cachedRelationshipProperties = Utils.GetRelationshipProperties(GetType());
     }
 
+    /// <summary>
+    /// Updates the properties of only the relationship. The parent, child and other relationships will be ignored.
+    /// Does not work if relationship has not been created already.
+    /// </summary>
+    /// <returns></returns>
+    public async Task UpdateRelationshipOnly()
+    {
+        if(EntityRelationshipId is not null)
+        {
+            await _dbConnector.UpdateDirectedRelationship(this, _cachedRelationshipProperties);
+        }
+    }
+
     internal async Task Persist(Guid childId, Guid parentId)
     {
         if (EntityRelationshipId is null)

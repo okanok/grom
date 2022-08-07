@@ -76,8 +76,13 @@ internal class GromNeo4jResultMapper
         var properties = Utils.GetEntityProperties(nodeInstance.GetType()).ToList();
         foreach (var property in properties)
         {
-            var propertyValue = Utils.Typify(property.PropertyType, node.Properties[property.Name]);
-            property.SetValue(nodeInstance, propertyValue);
+            var propertyName = Utils.GetNodePropertyName(property);
+            // if false property is not in result and thus value is null
+            if (node.Properties.ContainsKey(propertyName)) {
+                var propertyValue = Utils.Typify(property.PropertyType, node.Properties[Utils.GetNodePropertyName(property)]);
+                property.SetValue(nodeInstance, propertyValue);
+            }
+
         }
         nodeInstance.EntityNodeId = RetrieveNodeIdentifier(node);
         return nodeInstance;
@@ -93,8 +98,14 @@ internal class GromNeo4jResultMapper
         var properties = Utils.GetRelationshipProperties(relationshipInstance.GetType()).ToList();
         foreach (var property in properties)
         {
-            var propertyValue = Utils.Typify(property.PropertyType, relationship.Properties[property.Name]);
-            property.SetValue(relationshipInstance, propertyValue);
+            var propertyName = Utils.GetRelationshipPropertyName(property);
+            // if false property is not in result and thus value is null
+            if (relationship.Properties.ContainsKey(propertyName))
+            {
+                var propertyValue = Utils.Typify(property.PropertyType, relationship.Properties[Utils.GetRelationshipPropertyName(property)]);
+                property.SetValue(relationshipInstance, propertyValue);
+            }
+
         }
         relationshipInstance.EntityRelationshipId = RetrieveRelationshipIdentifier(relationship);
         return relationshipInstance;

@@ -29,8 +29,9 @@ public abstract class EntityNode
     /// Persists the object instance that inherits from this class. If it allready exists in the database the node will be updated.
     /// Node Label will be the name of the class and properties will be the ones with the NodeProperty attribute.
     /// </summary>
+    /// <param name="Degree">defaults to null if you want to retrieve all ancestors. Can be set to only retrieve related nodes untill a number of 'jumps' away from the root.</param>
     /// <returns></returns>
-    public async Task Persist()
+    public async Task Persist(int? Degree = null)
     {
         if (!EntityNodeId.HasValue)
         {
@@ -42,10 +43,17 @@ public abstract class EntityNode
         }
 
         // Persist relationships
-        var relationships = GetRelationshipFields();
-        foreach (var relationship in relationships)
+        if (Degree is null || Degree > 0)
         {
-            await relationship.Persist(EntityNodeId.Value);
+            if (Degree is not null)
+            {
+                Degree--;
+            }
+            var relationships = GetRelationshipFields();
+            foreach (var relationship in relationships)
+            {
+                await relationship.Persist(EntityNodeId.Value, Degree);
+            }
         }
     }
 

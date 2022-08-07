@@ -20,6 +20,11 @@ internal class ExpressionToGromDSLMapper<T>
         parameterName = expr.Parameters.First().Name!;
     }
 
+    internal string GetRootNodeName()
+    {
+        return typeof(T).Name;
+    }
+
     internal IConstraintNode Map()
     {
         return Map(expr.Body);
@@ -117,7 +122,7 @@ internal class ExpressionToGromDSLMapper<T>
             var member = (MemberExpression)expr;
             if (member.Expression.NodeType == ExpressionType.Parameter)
             {
-                name = member.Member.Name;
+                name = Utils.GetMemberPropertyName(member.Member);
                 return ((ParameterExpression)member.Expression).Name == parameterName;
             }
         }
@@ -143,17 +148,17 @@ internal class ExpressionToGromDSLMapper<T>
     private string getValueFromMemberExpression(MemberExpression expr)
     {
         var o = Expression.Lambda(expr).Compile().DynamicInvoke();
-        return Utils.TypeStringify(o);
+        return Utils.StringifyType(o);
     }
 
     private string getValueFromConstantExpression(ConstantExpression expr)
     {
-        return Utils.TypeStringify(expr.Value);
+        return Utils.StringifyType(expr.Value);
     }
 
     private string getValueFromMethodCall(MethodCallExpression expr)
     {
         var o = Expression.Lambda(expr).Compile().DynamicInvoke();
-        return Utils.TypeStringify(o);
+        return Utils.StringifyType(o);
     }   
 }

@@ -1,0 +1,6 @@
+site_name: Grom
+
+nav:
+  - Grom: 'README.md'
+  - Docs: 'docs.md'
+  - Contribute: 'contribute.md'
