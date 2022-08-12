@@ -141,7 +141,7 @@ Currently only Neo4J is supported. With the release of version 1.0 Azure Cosmos 
 
 ## Docs
 
-Comming soon.
+Our docs can be found [here](https://okanok.github.io/grom/)
 
 ## Contribute & Bugs
 
