@@ -1,10 +1,5 @@
 ﻿using Grom.Entities;
 using Grom.Entities.Attributes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Grom.IntegrationTests.Models;
 
@@ -24,4 +19,10 @@ public class SupportedPropertiesNode : EntityNode
 
     [NodeProperty]
     public long LongProp { get; set; }
+
+    [NodeProperty]
+    public DateTime DateTimeProp { get; set; }
+
+    [NodeProperty]
+    public DateOnly DateOnlyProp { get; set; }
 }

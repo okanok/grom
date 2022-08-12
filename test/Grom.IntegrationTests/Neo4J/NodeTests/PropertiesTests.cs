@@ -18,7 +18,9 @@ public class PropertiesTests: Neo4JTestBase
             IntProp = 55,
             BoolProp = true,
             FloatProp = 42.0F,
-            LongProp = 12345678901235L
+            LongProp = 12345678901235L,
+            DateTimeProp = DateTime.Now,
+            DateOnlyProp = DateOnly.FromDateTime(DateTime.Now)
         },
         new SupportedPropertiesNode
         {
@@ -26,7 +28,9 @@ public class PropertiesTests: Neo4JTestBase
             IntProp = 0,
             BoolProp = false,
             FloatProp = 0.00F,
-            LongProp = 0L
+            LongProp = 0L,
+            DateTimeProp = DateTime.MinValue,
+            DateOnlyProp = DateOnly.FromDateTime(DateTime.MinValue)
         },
         new SupportedPropertiesNode
         {
@@ -34,7 +38,10 @@ public class PropertiesTests: Neo4JTestBase
             IntProp = -55,
             BoolProp = false,
             FloatProp = -12.12F,
-            LongProp = -10L
+            LongProp = -10L,
+            DateTimeProp = DateTime.Now.AddDays(-20),
+            DateOnlyProp = DateOnly.FromDateTime(DateTime.Now.AddDays(-20))
+
         },
         new SupportedPropertiesNode
         {
@@ -42,7 +49,9 @@ public class PropertiesTests: Neo4JTestBase
             IntProp = 011,
             BoolProp = 1==1,
             FloatProp = 1.24F-0.5534F,
-            LongProp = 00123124242L
+            LongProp = 00123124242L,
+            DateTimeProp = DateTime.Now.AddYears(10).AddMinutes(30),
+            DateOnlyProp = DateOnly.FromDateTime(DateTime.Now.AddYears(10))
         }
     };
 
@@ -63,6 +72,8 @@ public class PropertiesTests: Neo4JTestBase
             Assert.Equal(node.BoolProp, retrievedNode.BoolProp);
             Assert.Equal(node.FloatProp, retrievedNode.FloatProp);
             Assert.Equal(node.LongProp, retrievedNode.LongProp);
+            Assert.Equal(node.DateTimeProp.ToUniversalTime(), retrievedNode.DateTimeProp.ToUniversalTime());
+            Assert.Equal(node.DateOnlyProp, retrievedNode.DateOnlyProp);
         }
     }
 
@@ -86,21 +97,95 @@ public class PropertiesTests: Neo4JTestBase
     }
 
     [Fact]
-    public void CreatingNodeWithUnsupportedTypeShouldThrowError()
+    public async Task CreatingNodeWithUnsupportedListTypeShouldThrowError()
     {
-        Assert.Throws<NodePropertyTypeNotSupportedException>(() => new NodeWithDateTime
+        await Assert.ThrowsAsync<PropertyTypeNotSupportedException>(async () =>
         {
-            DateProperty = new DateTime()
+            var node = new NodeWithList
+            {
+                IntArray = new int[] { 1, 2 }
+            };
+
+            await node.Persist();
         });
     }
 
     [Fact]
-    public void CreatingNodeWithUnsupportedListTypeShouldThrowError()
+    public async Task CreatingNodeWithCustomPropertyNameShouldWork()
     {
-        Assert.Throws<NodePropertyTypeNotSupportedException>(() => new NodeWithList
+        var node = new NodeWithCustomPropertyName
         {
-            IntArray = new int[] { 1, 2 }
-        });
+            Id = 10
+        };
+
+        await node.Persist();
+
+        var retrievedNode = await Retrieve<NodeWithCustomPropertyName>
+            .Where(n => n.Id == 10)
+            .GetSingle();
+
+        Assert.NotNull(retrievedNode);
+        Assert.Equal(node.Id, retrievedNode.Id);
+    }
+
+    [Fact]
+    public async Task UpdatingNodeWithCustomPropertyNameShouldWork()
+    {
+        var node = new NodeWithCustomPropertyName
+        {
+            Id = 60
+        };
+
+        await node.Persist();
+
+        node.Id = 50;
+        await node.Persist();
+
+        var retrievedNode = await Retrieve<NodeWithCustomPropertyName>
+            .Where(n => n.Id == 50)
+            .GetSingle();
+
+        Assert.NotNull(retrievedNode);
+        Assert.Equal(node.Id, retrievedNode.Id);
+    }
+
+    [Fact]
+    public async Task CreateNodeWithNullablePropertySetToNull()
+    {
+        var node = new NodeWithNullableProperty
+        {
+            Id = 10
+        };
+
+        await node.Persist();
+
+        var retrievedNode = await Retrieve<NodeWithNullableProperty>
+            .Where(n => n.Id == 10)
+            .GetSingle();
+
+        Assert.NotNull(retrievedNode);
+        Assert.Equal(node.Id, retrievedNode.Id);
+        Assert.Null(retrievedNode.someNullableValue);
+    }
+
+    [Fact]
+    public async Task CreateNodeWithNullablePropertySetToNonNullValue()
+    {
+        var node = new NodeWithNullableProperty
+        {
+            Id = 10,
+            someNullableValue = "not null"
+        };
+
+        await node.Persist();
+
+        var retrievedNode = await Retrieve<NodeWithNullableProperty>
+            .Where(n => n.Id == 10)
+            .GetSingle();
+
+        Assert.NotNull(retrievedNode);
+        Assert.Equal(node.Id, retrievedNode.Id);
+        Assert.Equal(node.someNullableValue, retrievedNode.someNullableValue);
     }
 }
 
@@ -153,11 +238,19 @@ public class Nodes : IEnumerable<SupportedPropertiesNode>
     }
 }
 
-//TODO: add test for this
-public class NodeWithForbiddenPropName : EntityNode
+public class NodeWithCustomPropertyName : EntityNode
 {
+    [NodeProperty(dbPropertyName: "identity")]
+    public int Id { get; set; }
+}
+
+public class NodeWithNullableProperty : EntityNode
+{
+    [NodeProperty()]
+    public int Id { get; set; }
+
     [NodeProperty]
-    public int id { get; set; }
+    public string? someNullableValue { get; set; }
 }
 
 public class NodeWithNonNodePropertyProperties : EntityNode
@@ -166,12 +259,6 @@ public class NodeWithNonNodePropertyProperties : EntityNode
     public int identifier { get; set; }
 
     public int idk { get; set; }
-}
-
-public class NodeWithDateTime : EntityNode
-{
-    [NodeProperty]
-    public DateTime DateProperty { get; set; }
 }
 
 public class NodeWithList : EntityNode

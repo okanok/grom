@@ -18,3 +18,19 @@ public class KnowsRelationship : RelationshipBase
 
     }
 }
+
+public class KnowsCustomNameRelationship : RelationshipBase
+{
+    [RelationshipProperty("yearsKnown")]
+    public int ForYears { get; set; }
+
+    public KnowsCustomNameRelationship()
+    {
+    }
+
+    public KnowsCustomNameRelationship(int forYears)
+    {
+        ForYears = forYears;
+
+    }
+}

@@ -1,6 +1,7 @@
 ﻿using Grom.Entities;
 using Grom.Entities.Relationships;
 using Grom.Util;
+using Grom.Util.Exceptions;
 using Neo4j.Driver;
 
 namespace Grom.GraphDbConnectors.Neo4J;
@@ -9,7 +10,7 @@ internal class GromNeo4jResultMapper
 {
     internal T? Map<T>(List<IRecord> records, string nodeKey = "n", string relationshipKey = "r", string parentKey = "p") where T : EntityNode
     {
-        return MapMultiple<T>(records, nodeKey, relationshipKey, parentKey).FirstOrDefault(); //TODO: maybe give error when multiple nodes are found? 
+        return MapMultiple<T>(records, nodeKey, relationshipKey, parentKey).FirstOrDefault();
 
     }
 
@@ -33,7 +34,7 @@ internal class GromNeo4jResultMapper
                     nodes.Add(node.Id, mappedNode); 
                 }
             }
-            if (record[parentKey] is not null)
+            if (record.Keys.Contains(parentKey) && record[parentKey] is not null)
             {
                 var node = (INode)record[parentKey];
                 if (!nodes.ContainsKey(node.Id))
@@ -47,7 +48,7 @@ internal class GromNeo4jResultMapper
         // Add relationships between nodes in result
         foreach (var record in records)
         {
-            if (record[relationshipKey] is not null)
+            if (record.Keys.Contains(relationshipKey) && record[relationshipKey] is not null)
             {
                 var relationship = (IRelationship)record[relationshipKey];
                 var relationshipType = relationshipsStructure.FirstOrDefault(t => t.Item2.Name.Equals(relationship.Type)).Item2;
@@ -58,7 +59,7 @@ internal class GromNeo4jResultMapper
                 var mappedRelationship = MapRelationshipToObject(relationship, relationshipType);
                 var parent = nodes[relationship.StartNodeId];
                 var child = nodes[relationship.EndNodeId];
-                AddRelationshipToNode(parent, mappedRelationship, child);
+                Utils.AddRelationshipToNode(parent, mappedRelationship, child);
             }
         }
 
@@ -75,10 +76,15 @@ internal class GromNeo4jResultMapper
         var properties = Utils.GetEntityProperties(nodeInstance.GetType()).ToList();
         foreach (var property in properties)
         {
-            var propertyValue = Utils.Typify(property.PropertyType, node.Properties[property.Name]);
-            property.SetValue(nodeInstance, propertyValue);
+            var propertyName = Utils.GetNodePropertyName(property);
+            // if false property is not in result and thus value is null
+            if (node.Properties.ContainsKey(propertyName)) {
+                var propertyValue = Utils.Typify(property.PropertyType, node.Properties[Utils.GetNodePropertyName(property)]);
+                property.SetValue(nodeInstance, propertyValue);
+            }
+
         }
-        nodeInstance.EntityNodeId = node.Id;
+        nodeInstance.EntityNodeId = RetrieveNodeIdentifier(node);
         return nodeInstance;
     }
 
@@ -92,26 +98,42 @@ internal class GromNeo4jResultMapper
         var properties = Utils.GetRelationshipProperties(relationshipInstance.GetType()).ToList();
         foreach (var property in properties)
         {
-            var propertyValue = Utils.Typify(property.PropertyType, relationship.Properties[property.Name]);
-            property.SetValue(relationshipInstance, propertyValue);
+            var propertyName = Utils.GetRelationshipPropertyName(property);
+            // if false property is not in result and thus value is null
+            if (relationship.Properties.ContainsKey(propertyName))
+            {
+                var propertyValue = Utils.Typify(property.PropertyType, relationship.Properties[Utils.GetRelationshipPropertyName(property)]);
+                property.SetValue(relationshipInstance, propertyValue);
+            }
+
         }
-        relationshipInstance.EntityRelationshipId = relationship.Id;
+        relationshipInstance.EntityRelationshipId = RetrieveRelationshipIdentifier(relationship);
         return relationshipInstance;
     }
 
-    //TODO: add to util
-    internal void AddRelationshipToNode(EntityNode parent, RelationshipBase relationship, EntityNode child)
-     {
-        var relationshipProperty = Utils.GetNodeRelationshipProperty(parent, relationship.GetType(), child.GetType());
-        if(relationshipProperty is null)
+    private Guid RetrieveNodeIdentifier(INode node)
+    {
+        if (node.Properties.ContainsKey("nodeIdentifier")) {
+            var guidString = node.Properties["nodeIdentifier"].As<string>();
+            return Utils.StringToGuid(guidString);
+        } else
         {
-            throw new InvalidOperationException($"Cannot find relationship collection in class {nameof(parent)} with relationhship type {nameof(relationship)} and child {nameof(child)}");
+            // This should not happen as the query should only find nodes with the nodeIdentifier property!
+            throw new QueryResultException("Node should have nodeIdentifier property!");
         }
-        var relationshipCollection = relationshipProperty.GetValue(parent, null) as IRelationshipCollection;
-        if(relationshipCollection is null)
+    }
+
+    private Guid RetrieveRelationshipIdentifier(IRelationship relationship)
+    {
+        if (relationship.Properties.ContainsKey("relationshipIdentifier"))
         {
-            throw new InvalidOperationException($"Could not retrieve reference to collection {relationshipProperty.Name} from class {nameof(parent)}");
+            var guidString = relationship.Properties["relationshipIdentifier"].As<string>();
+            return Utils.StringToGuid(guidString);
         }
-        relationshipCollection.Add(relationship, child); 
+        else
+        {
+            // This should not happen as the query should only find relationships with the relationshipIdentifier property!
+            throw new QueryResultException("Relationship should have relationshipIdentifier property!");
+        }
     }
 }

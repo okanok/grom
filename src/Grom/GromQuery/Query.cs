@@ -5,11 +5,9 @@ namespace Grom.GromQuery;
 
 public class Query<T> : DbRetriever<T> where T : EntityNode
 {
-    private readonly IConstraintNode state;
 
-    internal Query(IConstraintNode state) : base(state)
+    internal Query(IConstraintNode state) : base(new QueryState(state))
     {
-        this.state = state;
     }
 
     /// <summary>
@@ -19,10 +17,10 @@ public class Query<T> : DbRetriever<T> where T : EntityNode
     /// </summary>
     /// <param name="constr">the constraints in the Grom DSL format</param>
     /// <returns></returns>
-    public static DbRetriever<T> Where(IConstraintNode constr)
-    {
-        return new DbRetriever<T>(constr);
-    }
+    //public static DbRetriever<T> Where(IConstraintNode constr)
+    //{
+    //    return new DbRetriever<T>(new QueryState(constr));
+    //}
 
     /// <summary>
     /// Filter nodes based on given lambda expression
@@ -33,18 +31,25 @@ public class Query<T> : DbRetriever<T> where T : EntityNode
     public static DbRetriever<T> Where(Expression<Func<T, bool>> expr)
     {
         var expressoinMapper = new ExpressionToGromDSLMapper<T>(expr);
-        var a = expressoinMapper.Map();
-        return new DbRetriever<T>(a);
+        var mappedExpression = expressoinMapper.Map();
+        var NodeName = expressoinMapper.GetRootNodeName();
+        return new DbRetriever<T>(new QueryState(mappedExpression, NodeName));
     }
 }
 
 public class DbRetriever<T> where T : EntityNode
 {
-    private readonly IConstraintNode state;
+    private readonly QueryState state;
 
-    internal DbRetriever(IConstraintNode state)
+    internal DbRetriever(QueryState state)
     {
         this.state = state;
+    }
+
+    public DbRetriever<T> IgnoreRelatedNodes()
+    {
+        state.RetrieveRelationships = false;
+        return this;
     }
 
     /// <summary>

@@ -20,8 +20,10 @@ public class RelationshipPropertiesTests : Neo4JTestBase
             IntProp = 1,
             BoolProp = false,
             FloatProp = 33F,
-            LongProp = 1L
-        }, node2);
+            LongProp = 1L,
+            DateTimeProp = DateTime.Now,
+            DateOnlyProp = DateOnly.FromDateTime(DateTime.Now)
+        }, node2) ;
 
         await node1.Persist();
 
@@ -37,6 +39,50 @@ public class RelationshipPropertiesTests : Neo4JTestBase
         Assert.False(retrievedNode.propertiesRelationship.First().Relationship.BoolProp);
         Assert.Equal(33F, retrievedNode.propertiesRelationship.First().Relationship.FloatProp);
         Assert.Equal(1L, retrievedNode.propertiesRelationship.First().Relationship.LongProp);
+        Assert.Equal(node1.propertiesRelationship.First().Relationship.DateTimeProp, retrievedNode.propertiesRelationship.First().Relationship.DateTimeProp);
+        Assert.Equal(node1.propertiesRelationship.First().Relationship.DateOnlyProp, retrievedNode.propertiesRelationship.First().Relationship.DateOnlyProp);
+    }
+
+    [Fact]
+    public async Task CreatePersonWithCustomRelationshipPropertyNameTest()
+    {
+        var person1 = new PersonWithCustomRelationship("Jaime", 40);
+        var person2 = new PersonWithCustomRelationship("Tyrion", 30);
+        person1.KnownPeople.Add(new KnowsCustomNameRelationship(30), person2);
+
+        await person1.Persist();
+
+        var retrievedNode = await Retrieve<PersonWithCustomRelationship>
+            .Where(n => n.Name == "Jaime")
+            .GetSingle();
+
+        Assert.NotNull(retrievedNode);
+        Assert.Equal(person1.Name, retrievedNode.Name);
+        Assert.Equal(30, retrievedNode.KnownPeople.First().Relationship.ForYears);
+        Assert.Equal("Tyrion", retrievedNode.KnownPeople.First().Node.Name);
+    }
+
+    [Fact]
+    public async Task UpdatePersonWithCustomRelationshipPropertyNameTest()
+    {
+        var person1 = new PersonWithCustomRelationship("Jaime", 40);
+        var person2 = new PersonWithCustomRelationship("Tyrion", 30);
+        person1.KnownPeople.Add(new KnowsCustomNameRelationship(30), person2);
+
+        await person1.Persist();
+
+        person1.KnownPeople.First().Relationship.ForYears = 10;
+
+        await person1.KnownPeople.First().Relationship.UpdateRelationshipOnly();
+
+        var retrievedNode = await Retrieve<PersonWithCustomRelationship>
+            .Where(n => n.Name == "Jaime")
+            .GetSingle();
+
+        Assert.NotNull(retrievedNode);
+        Assert.Equal(person1.Name, retrievedNode.Name);
+        Assert.Equal(10, retrievedNode.KnownPeople.First().Relationship.ForYears);
+        Assert.Equal("Tyrion", retrievedNode.KnownPeople.First().Node.Name);
     }
 }
 
@@ -70,4 +116,10 @@ public class RelationshipWithAllProperties : RelationshipBase
 
     [RelationshipProperty]
     public long LongProp { get; set; }
+
+    [RelationshipProperty]
+    public DateTime DateTimeProp { get; set; }
+
+    [RelationshipProperty]
+    public DateOnly DateOnlyProp { get; set; }
 }

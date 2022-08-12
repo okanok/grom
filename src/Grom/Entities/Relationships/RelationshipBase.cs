@@ -1,5 +1,6 @@
 ﻿using Grom.Entities.Attributes;
 using Grom.GraphDbConnectors;
+using Grom.Util;
 using Grom.Util.Exceptions;
 using System.Reflection;
 
@@ -8,37 +9,42 @@ namespace Grom.Entities.Relationships;
 public abstract class RelationshipBase
 {
     private readonly GromGraphDbConnector _dbConnector;
+    private readonly IEnumerable<PropertyInfo> _cachedRelationshipProperties;
 
-    /*
-     * EntityId is the entity id assigned by the graph database itself to the node and should always be unique.
-     * This property is for internal use to know if the node has been created in the database for example.
-     */
-    internal long? EntityRelationshipId;
+    /// <summary>
+    ///  EntityRelationshipId is the entity id assigned by Grom itself to the node and should always be unique.
+    ///  This property is for internal use to identify entities in the database and link them to objects in code.
+    ///  If the Guid is null then the object has not been created yet in the database.
+    /// </summary>
+    internal Guid? EntityRelationshipId;
 
     public RelationshipBase()
     {
         _dbConnector = GromGraph.GetDbConnector();
-        var properties = GetEntityProperties();
-        foreach (var property in properties)
-        {
-            // TODO: make sure types are not nullable or support nullable properties
-            if (!_dbConnector.GetSupportedTypes().Contains(property.PropertyType))
-            {
-                throw new RelationshipPropertyTypeNotSupportedException(property.PropertyType.Name, property.Name, GetType().Name);
-            }
+        _cachedRelationshipProperties = Utils.GetRelationshipProperties(GetType());
+    }
 
+    /// <summary>
+    /// Updates the properties of only the relationship. The parent, child and other relationships will be ignored.
+    /// Does not work if relationship has not been created already.
+    /// </summary>
+    /// <returns></returns>
+    public async Task UpdateRelationshipOnly()
+    {
+        if(EntityRelationshipId is not null)
+        {
+            await _dbConnector.UpdateDirectedRelationship(this, _cachedRelationshipProperties);
         }
     }
 
-    internal async Task Persist(long childId, long parentId)
+    internal async Task Persist(Guid childId, Guid parentId)
     {
-        var fld = GetEntityProperties();
         if (EntityRelationshipId is null)
         {
-            EntityRelationshipId = await _dbConnector.CreateDirectedRelationship(this, fld, childId, parentId);
+            EntityRelationshipId = await _dbConnector.CreateDirectedRelationship(this, _cachedRelationshipProperties, childId, parentId);
             return;
         }
-        await _dbConnector.UpdateDirectedRelationship(this, fld);
+        await _dbConnector.UpdateDirectedRelationship(this, _cachedRelationshipProperties);
     }
 
     // For now internal to force use of remove methods in RelationshipCollection.
@@ -51,14 +57,5 @@ public abstract class RelationshipBase
         await _dbConnector.DeleteRelationship(EntityRelationshipId.Value);
         EntityRelationshipId = null; // To make sure code keeps working correctly
 
-    }
-
-    // TODO: check for optimization, use from Utils class
-    private IEnumerable<PropertyInfo> GetEntityProperties()
-    {
-        Type t = GetType();
-        PropertyInfo[] fld = t.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-
-        return fld.Where(x => x.CustomAttributes.Any(a => a.AttributeType == typeof(RelationshipProperty)));
     }
 }

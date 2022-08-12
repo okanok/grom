@@ -93,4 +93,112 @@ public class UpdateNodeTests: Neo4JTestBase
         Assert.Equal(node2.Name, otherNode!.Name);
         Assert.Equal(node2.Age, otherNode.Age);
     }
+
+    [Fact]
+    public async Task UpdateNodeWithDegree0Test()
+    {
+        var person1 = new PersonWithRelationship("Jaime", 40);
+        var person2 = new PersonWithRelationship("Tyrion", 30);
+        var person3 = new PersonWithRelationship("Tywin", 60);
+
+        person2.KnownPeople.Add(new KnowsRelationship(30), person1);
+        person1.KnownPeople.Add(new KnowsRelationship(40), person3);
+
+        await person2.Persist();
+
+        person2.Age = 25;
+        person2.KnownPeople.First().Relationship.ForYears = 60;
+        person1.Age = 45;
+        person1.KnownPeople.First().Relationship.ForYears = 10;
+        person3.Age = 65;
+
+        await person2.Persist(Degree: 0);
+
+        var retrievedPerson = await Retrieve<PersonWithRelationship>
+            .Where(p => p.Name == "Tyrion")
+            .GetSingle();
+
+        Assert.NotNull(retrievedPerson);
+        Assert.Equal(25, retrievedPerson.Age);
+        Assert.True(retrievedPerson.KnownPeople
+            .Where(r => r.Relationship.ForYears == 30)
+            .Count() == 1);
+        Assert.Equal(40, retrievedPerson.KnownPeople.First().Node.Age);
+        Assert.Equal(60, retrievedPerson.KnownPeople.First().Node.KnownPeople.First().Node.Age);
+        Assert.True(retrievedPerson.KnownPeople.First().Node.KnownPeople
+            .Where(r => r.Relationship.ForYears == 40)
+            .Count() == 1);
+    }
+
+    [Fact]
+    public async Task UpdateNodeWithDegree1Test()
+    {
+        var person1 = new PersonWithRelationship("Jaime", 40);
+        var person2 = new PersonWithRelationship("Tyrion", 30);
+        var person3 = new PersonWithRelationship("Tywin", 60);
+
+        person2.KnownPeople.Add(new KnowsRelationship(30), person1);
+        person1.KnownPeople.Add(new KnowsRelationship(40), person3);
+
+        await person2.Persist();
+
+        person2.Age = 25;
+        person2.KnownPeople.First().Relationship.ForYears = 60;
+        person1.Age = 45;
+        person1.KnownPeople.First().Relationship.ForYears = 10;
+        person3.Age = 65;
+
+        await person2.Persist(Degree: 1);
+
+        var retrievedPerson = await Retrieve<PersonWithRelationship>
+            .Where(p => p.Name == "Tyrion")
+            .GetSingle();
+
+        Assert.NotNull(retrievedPerson);
+        Assert.Equal(25, retrievedPerson.Age);
+        Assert.True(retrievedPerson.KnownPeople
+            .Where(r => r.Relationship.ForYears == 60)
+            .Count() == 1);
+        Assert.Equal(45, retrievedPerson.KnownPeople.First().Node.Age);
+        Assert.Equal(60, retrievedPerson.KnownPeople.First().Node.KnownPeople.First().Node.Age);
+        Assert.True(retrievedPerson.KnownPeople.First().Node.KnownPeople
+            .Where(r => r.Relationship.ForYears == 40)
+            .Count() == 1);
+    }
+
+    [Fact]
+    public async Task UpdateNodeWithDegree2Test()
+    {
+        var person1 = new PersonWithRelationship("Jaime", 40);
+        var person2 = new PersonWithRelationship("Tyrion", 30);
+        var person3 = new PersonWithRelationship("Tywin", 60);
+
+        person2.KnownPeople.Add(new KnowsRelationship(30), person1);
+        person1.KnownPeople.Add(new KnowsRelationship(40), person3);
+
+        await person2.Persist();
+
+        person2.Age = 25;
+        person2.KnownPeople.First().Relationship.ForYears = 60;
+        person1.Age = 45;
+        person1.KnownPeople.First().Relationship.ForYears = 10;
+        person3.Age = 65;
+
+        await person2.Persist(Degree: 2);
+
+        var retrievedPerson = await Retrieve<PersonWithRelationship>
+            .Where(p => p.Name == "Tyrion")
+            .GetSingle();
+
+        Assert.NotNull(retrievedPerson);
+        Assert.Equal(25, retrievedPerson.Age);
+        Assert.True(retrievedPerson.KnownPeople
+            .Where(r => r.Relationship.ForYears == 60)
+            .Count() == 1);
+        Assert.Equal(45, retrievedPerson.KnownPeople.First().Node.Age);
+        Assert.Equal(65, retrievedPerson.KnownPeople.First().Node.KnownPeople.First().Node.Age);
+        Assert.True(retrievedPerson.KnownPeople.First().Node.KnownPeople
+            .Where(r => r.Relationship.ForYears == 10)
+            .Count() == 1);
+    }
 }
