@@ -18,24 +18,24 @@ public class GromNeo4jConnector : GromGraphDbConnector
     private static readonly string CreateDirectedRelationshipQueryBase = "MATCH (a), (b) WHERE a.nodeIdentifier = '{0}' AND b.nodeIdentifier = '{1}' CREATE (a)-[r:{2} {{{3}, relationshipIdentifier: '{4}'}}]->(b) RETURN r.relationshipIdentifier as r";
     private static readonly string UpdateDirectedRelationshipQueryBase = "MATCH (a)-[r:{0}]->(b) WHERE r.relationshipIdentifier = '{1}' SET r = {{{2}, relationshipIdentifier: '{1}'}};";
     private static readonly string DeleteDirectedRelationshipQueryBase = "MATCH (a)-[r]->(b) WHERE r.relationshipIdentifier = '{0}' DELETE r";
-    private static readonly string QueryOnlyNode = "MATCH (n:{0}) WHERE {1} AND EXISTS(n.nodeIdentifier) RETURN n";
-    private static readonly string QueryWithRelationships = "MATCH (n:{0}) WHERE {1} AND EXISTS(n.nodeIdentifier) OPTIONAL MATCH (n)-[r*]->(p) WHERE (ALL(rel in r WHERE EXISTS(rel.relationshipIdentifier))) AND EXISTS(p.nodeIdentifier) RETURN n, last(r) AS r, p";
+    private static readonly string QueryNodeOnly = "MATCH (n:{0}) WHERE {1} AND EXISTS(n.nodeIdentifier) RETURN n";
+    private static readonly string QueryNodeWithRelationships = "MATCH (n:{0}) WHERE {1} AND EXISTS(n.nodeIdentifier) OPTIONAL MATCH (n)-[r*]->(p) WHERE (ALL(rel in r WHERE EXISTS(rel.relationshipIdentifier))) AND EXISTS(p.nodeIdentifier) RETURN n, last(r) AS r, p";
 
     private readonly IDriver _driver;
-    private readonly GromNeo4jQueryBuilder _gromNeo4JQueryBuilder;
-    private readonly GromNeo4jResultMapper _gromNeo4JResultMapper;
+    private readonly IQueryBuilder _gromNeo4JQueryBuilder;
+    private readonly Neo4jResultMapper _gromNeo4JResultMapper;
 
     public GromNeo4jConnector(IDriver driver)
     {
-        _gromNeo4JQueryBuilder = new GromNeo4jQueryBuilder();
-        _gromNeo4JResultMapper = new GromNeo4jResultMapper();
+        _gromNeo4JQueryBuilder = new Neo4jQueryBuilder();
+        _gromNeo4JResultMapper = new Neo4jResultMapper();
         _driver = driver;
     }
 
     internal override async Task<Guid> CreateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel)
     {
         var nodeIdentifier = Guid.NewGuid();
-        var props = string.Join(", ", properties.Select(p => Utils.StringifyProperty(':', p, node)));
+        var props = string.Join(", ", properties.Select(p => Utils.StringifyProperty("{0}:{1}", p, node)));
         var query = string.Format(CreateNodeQueryBase, nodeLabel, props, nodeIdentifier);
 
 
@@ -70,7 +70,7 @@ public class GromNeo4jConnector : GromGraphDbConnector
     internal override async Task UpdateNode(EntityNode node, IEnumerable<PropertyInfo> properties, string nodeLabel, Guid nodeId)
     {
         // TODO: optimize retrieving properties and values
-        var props = string.Join(", ", properties.ToList().Select(p => Utils.StringifyProperty(':', p, node)));
+        var props = string.Join(", ", properties.ToList().Select(p => Utils.StringifyProperty("{0}:{1}", p, node)));
         var query = string.Format(UpdateNodeQueryBase, node.GetType().Name, nodeId, props);
 
         var session = _driver.AsyncSession();
@@ -87,7 +87,7 @@ public class GromNeo4jConnector : GromGraphDbConnector
     internal override async Task<Guid> CreateDirectedRelationship(RelationshipBase relationship, IEnumerable<PropertyInfo> properties, Guid childNodeId, Guid parentNodeId)
     {
         var relationshipIdentifier = Guid.NewGuid();
-        var props = string.Join(", ", properties.ToList().Select(p => Utils.StringifyProperty(':', p, relationship)));
+        var props = string.Join(", ", properties.ToList().Select(p => Utils.StringifyProperty("{0}: {1}", p, relationship)));
         var query = string.Format(CreateDirectedRelationshipQueryBase, parentNodeId, childNodeId, relationship.GetType().Name, props, relationshipIdentifier);
 
         var session = _driver.AsyncSession();
@@ -106,7 +106,7 @@ public class GromNeo4jConnector : GromGraphDbConnector
 
     internal override async Task UpdateDirectedRelationship(RelationshipBase relationship, IEnumerable<PropertyInfo> properties)
     {
-        var props = string.Join(", ", properties.ToList().Select(p => Utils.StringifyProperty(':', p, relationship)));
+        var props = string.Join(", ", properties.ToList().Select(p => Utils.StringifyProperty("{0}: {1}", p, relationship)));
         var query = string.Format(UpdateDirectedRelationshipQueryBase, relationship.GetType().Name, relationship.EntityRelationshipId, props);
 
         var session = _driver.AsyncSession();
@@ -139,8 +139,8 @@ public class GromNeo4jConnector : GromGraphDbConnector
     {
         var constraints = _gromNeo4JQueryBuilder.BuildQuery(state.Query);
         var query = state.RetrieveRelationships 
-            ? string.Format(QueryWithRelationships, state.RootNodeName, constraints) 
-            : string.Format(QueryOnlyNode, state.RootNodeName, constraints);
+            ? string.Format(QueryNodeWithRelationships, state.RootNodeName, constraints) 
+            : string.Format(QueryNodeOnly, state.RootNodeName, constraints);
 
 
         var session = _driver.AsyncSession();
@@ -168,8 +168,8 @@ public class GromNeo4jConnector : GromGraphDbConnector
     {
         var constraints = _gromNeo4JQueryBuilder.BuildQuery(state.Query);
         var query = state.RetrieveRelationships
-            ? string.Format(QueryWithRelationships, state.RootNodeName, constraints)
-            : string.Format(QueryOnlyNode, state.RootNodeName, constraints);
+            ? string.Format(QueryNodeWithRelationships, state.RootNodeName, constraints)
+            : string.Format(QueryNodeOnly, state.RootNodeName, constraints);
 
         var session = _driver.AsyncSession();
         try

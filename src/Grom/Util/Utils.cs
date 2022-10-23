@@ -20,41 +20,16 @@ internal class Utils
     {
         return o switch
         {
-            null        => "null",
-            int         => o.ToString() ?? string.Empty,
-            string      => string.Format("'{0}'", o),
-            bool        => (bool)o ? "1" : "0",
-            float       => ((float)o).ToString(CultureInfo.InvariantCulture),
-            long        => ((long)o).ToString(CultureInfo.InvariantCulture),
-            DateTime    => string.Format("datetime('{0}')", ((DateTime)o).ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss.fffffffK")),
-            DateOnly    => string.Format("date('{0}')", ((DateOnly)o).ToString("yyyy'-'MM'-'dd")),
+            null        => GromGraph.GetTypeMapper().StringifyNull(o),
+            int         => GromGraph.GetTypeMapper().StringifyInt(o),
+            string      => GromGraph.GetTypeMapper().StringifyString(o),
+            bool        => GromGraph.GetTypeMapper().StringifyBool(o),
+            float       => GromGraph.GetTypeMapper().StringifyFloat(o),
+            long        => GromGraph.GetTypeMapper().StringifyLong(o),
+            DateTime    => GromGraph.GetTypeMapper().StringifyDateTime(o),
+            DateOnly    => GromGraph.GetTypeMapper().StringifyDateOnly(o),
             _           => throw new PropertyTypeNotSupportedException(o.GetType().Name)
         };
-    }
-
-    /// <summary>
-    /// Will create a string representation of a property with the name and value seperated by the given delimiter
-    /// If NullabilityCheckOn() is called then will throw exception when value is null but property is not nullable
-    /// </summary>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    internal static string StringifyProperty(char delimiter, PropertyInfo property, EntityNode node)
-    {
-        var value = StringifyType(property.GetValue(node));
-        var name = GetNodePropertyName(property);
-        return string.Format("{0}{1} {2}", name, delimiter, value);
-    }
-
-    /// <summary>
-    /// Overload for relationships
-    /// </summary>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    internal static string StringifyProperty(char delimiter, PropertyInfo property, RelationshipBase relationship)
-    {
-        var value = StringifyType(property.GetValue(relationship));
-        var name = GetRelationshipPropertyName(property);
-        return string.Format("{0}{1} {2}", name, delimiter, value);
     }
 
     /// <summary>
@@ -65,32 +40,66 @@ internal class Utils
     /// <returns></returns>
     internal static object Typify(Type expectedType, object o)
     {
-        if(o is null)
+        if (o is null)
         {
-            return null; //TODO: handle null correctly
-        } else if (expectedType == typeof(int))
+            return null;
+        }
+        else if (expectedType == typeof(int))
         {
-            return Convert.ToInt32(o);
-        } else if (expectedType == typeof(bool))
+            return GromGraph.GetTypeMapper().TypifyInt(o);
+        }
+        else if (expectedType == typeof(bool))
         {
-            return Convert.ToBoolean(o);
-        } else if (expectedType == typeof(float))
+            return GromGraph.GetTypeMapper().TypifyBoolean(o);
+        }
+        else if (expectedType == typeof(float))
         {
-            return Convert.ToSingle(o);
-        } else if (expectedType == typeof(long))
+            return GromGraph.GetTypeMapper().TypifyFloat(o);
+        }
+        else if (expectedType == typeof(long))
         {
-            return Convert.ToInt64(o);
-        } else if (expectedType == typeof(string))
+            return GromGraph.GetTypeMapper().TypifyLong(o);
+        }
+        else if (expectedType == typeof(string))
         {
-            return Convert.ToString(o);
-        } else if (expectedType == typeof(DateTime))
+            return GromGraph.GetTypeMapper().TypifyString(o);
+        }
+        else if (expectedType == typeof(DateTime))
         {
-            return Convert.ToDateTime(o.ToString());
-        } else if (expectedType == typeof(DateOnly))
+            return GromGraph.GetTypeMapper().TypifyDateTime(o);
+        }
+        else if (expectedType == typeof(DateOnly))
         {
-            return DateOnly.Parse(o.ToString());
+            return GromGraph.GetTypeMapper().TypifyDateOnly(o);
         }
         throw new PropertyTypeNotSupportedException(o.GetType().Name);
+    }
+
+    /// <summary>
+    /// Will create a string representation of a property with the name and value seperated by the given delimiter
+    /// If NullabilityCheckOn() is called then will throw exception when value is null but property is not nullable
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    internal static string StringifyProperty(string template, PropertyInfo property, EntityNode node)
+    {
+        var value = StringifyType(property.GetValue(node));
+        var name = GetNodePropertyName(property);
+       
+        return string.Format(template, name, value);
+
+    }
+
+    /// <summary>
+    /// Overload for relationships
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    internal static string StringifyProperty(string template, PropertyInfo property, RelationshipBase relationship)
+    {
+        var value = StringifyType(property.GetValue(relationship));
+        var name = GetRelationshipPropertyName(property);
+        return string.Format(template, name, value);
     }
 
     /// <summary>

@@ -21,6 +21,23 @@ GromGraph.CreateConnection(GraphDatabase.Driver("bolt://localhost:7687", AuthTok
 ```
 Any valid instance of Neo4J IDriver can be passed, so you are not restricted to username/password authentication.
 
+### Gremlin Server
+To configure Grom for any database that has Gremlin Server running use:
+
+```
+var gremlinServer = new GremlinServer(
+    hostname: "localhost",
+    port: 8182,
+    username: "root",
+    password: "test"
+);
+gremlinClient = new GremlinClient(
+    gremlinServer: gremlinServer
+);
+
+GromGraph.CreateConnection(gremlinClient);
+```
+Simply provide any valid instance of GremlinClient to GromGraph.CreateConnection() and Grom will take care of the rest.
 ## Mapping a class
 To map a class as a node you have to do two things: inherit from EntityNode and annotate each property you want to map with NodeProperty. Grom does also require an empty constructor for all nodes.
 
@@ -135,7 +152,11 @@ To delete a relationship you can use the Remove, RemoveAt or RemoveRange methods
 
 ## Supported Databases
 
-Currently only Neo4J is supported. With the release of version 1.0 Azure Cosmos DB will also be supported.
+Currently Grom supports Neo4J and any database with Gremlin Server >= 3.4.0.
+
+Grom's test suite tests against the following databases:
+* Neo4J
+* OrientDB
 
 # More info
 

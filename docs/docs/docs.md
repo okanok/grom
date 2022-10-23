@@ -10,7 +10,23 @@ To configure Grom for Neo4J simply use:
 GromGraph.CreateConnection(GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.Basic("neo4j", "test")));
 ```
 Any valid instance of Neo4J IDriver can be passed, so you are not restricted to username/password authentication.
+### Gremlin Server
+To configure Grom for any database that has Gremlin Server running use:
 
+```
+var gremlinServer = new GremlinServer(
+    hostname: "localhost",
+    port: 8182,
+    username: "root",
+    password: "test"
+);
+gremlinClient = new GremlinClient(
+    gremlinServer: gremlinServer
+);
+
+GromGraph.CreateConnection(gremlinClient);
+```
+Simply provide any valid instance of GremlinClient to GromGraph.CreateConnection() and Grom will take care of the rest.
 ## Mapping a class
 To map a class as a node you have to do two things: inherit from EntityNode and annotate each property you want to map with NodeProperty. Grom does also require an empty constructor for all nodes.
 
@@ -182,7 +198,7 @@ To delete a relationship you can use the Remove, RemoveAt or RemoveRange methods
 ## How Grom works
 
 Grom works, as any ORM, by mapping C# concepts to concepts in graph databases. 
-A class become a node, a class property becomes a node property and a property that is a list of another class becomes a relationship. 
+A class becomes a node, a class property becomes a node property and a property that is a list of another class becomes a relationship. 
 Grom links objects to nodes with the internal property EntityNodeId in EntityNode. 
 This way Grom knows if the object already exists in the database or not and thus if a node needs to be created or updated.
 

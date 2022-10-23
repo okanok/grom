@@ -18,6 +18,7 @@ public class RelationshipCollection<T1, T2> : List<RelationshipItem<T1, T2>>, IR
     {
         foreach (var relationshipItem in this)
         {
+            // persist nodes first so we have GUID identifiers for both parent and child
             await relationshipItem.Node.Persist(Degree);
             await relationshipItem.Relationship.Persist(relationshipItem.Node.EntityNodeId!.Value, parentId);
         }
